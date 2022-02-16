@@ -96,7 +96,6 @@ find_package (Python3 COMPONENTS Interpreter)
 
 set(SHELL_SCRIPTS
     micromamba.sh
-    micromamba.csh
     micromamba.bat
     activate.bat
     _mamba_activate.bat
@@ -121,7 +120,6 @@ foreach(script ${SHELL_SCRIPTS})
 endforeach()
 
 set(LIBMAMBA_SOURCES
-    longpath.manifest
     ${LIBMAMBA_SOURCE_DIR}/version.cpp
     # Core API (low-level)
     ${LIBMAMBA_SOURCE_DIR}/core/singletons.cpp
@@ -143,7 +141,6 @@ set(LIBMAMBA_SOURCES
     ${LIBMAMBA_SOURCE_DIR}/core/package_cache.cpp
     ${LIBMAMBA_SOURCE_DIR}/core/pool.cpp
     ${LIBMAMBA_SOURCE_DIR}/core/prefix_data.cpp
-    ${LIBMAMBA_SOURCE_DIR}/core/satisfiability_error.cpp
     ${LIBMAMBA_SOURCE_DIR}/core/progress_bar.cpp
     ${LIBMAMBA_SOURCE_DIR}/core/progress_bar_impl.cpp
     ${LIBMAMBA_SOURCE_DIR}/core/pinning.cpp
@@ -196,7 +193,6 @@ set(LIBMAMBA_HEADERS
     ${LIBMAMBA_INCLUDE_DIR}/mamba/core/error_handling.hpp
     ${LIBMAMBA_INCLUDE_DIR}/mamba/core/fetch.hpp
     ${LIBMAMBA_INCLUDE_DIR}/mamba/core/fsutil.hpp
-    ${LIBMAMBA_INCLUDE_DIR}/mamba/core/satisfiability_error.hpp
     ${LIBMAMBA_INCLUDE_DIR}/mamba/core/history.hpp
     ${LIBMAMBA_INCLUDE_DIR}/mamba/core/link.hpp
     ${LIBMAMBA_INCLUDE_DIR}/mamba/core/mamba_fs.hpp
@@ -450,6 +446,8 @@ macro(libmamba_create_target target_name linkage deps_linkage output_name)
             # header only version to avoid chasing after the correct fmt version mathching
             # the one used in the bundle
             spdlog::spdlog_header_only
+            powerloader
+            zck
         )
 
         add_compile_definitions(SPDLOG_FMT_EXTERNAL)
@@ -465,6 +463,8 @@ macro(libmamba_create_target target_name linkage deps_linkage output_name)
         PUBLIC
             $<BUILD_INTERFACE:${LIBMAMBA_INCLUDE_DIR}>
             $<INSTALL_INTERFACE:include>
+        PRIVATE
+            $ENV{CONDA_PREFIX}/include
     )
 
     if (WIN32)
@@ -509,7 +509,7 @@ macro(libmamba_create_target target_name linkage deps_linkage output_name)
         find_package(Threads REQUIRED)
 
         target_link_libraries(${target_name} PUBLIC
-                              nlohmann_json::nlohmann_json
+                              nlohmann_json::nlohmann_jsonKlaim:klaim/initial_powerloader_integration_with_std_filesystem
                               Threads::Threads)
     endif ()
 

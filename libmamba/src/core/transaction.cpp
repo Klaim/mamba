@@ -5,6 +5,7 @@
 // The full license is in the file LICENSE, distributed with this software.
 
 #include <iostream>
+#include <powerloader/curl.hpp>
 #include <stack>
 
 #include <fmt/format.h>
@@ -23,6 +24,15 @@
 #include "mamba/core/thread_utils.hpp"
 #include "mamba/core/execution.hpp"
 #include "mamba/core/util_scope.hpp"
+
+
+#include "powerloader/downloader.hpp"
+#include "termcolor/termcolor.hpp"
+
+extern "C"
+{
+#include "solv/selection.h"
+}
 
 #include "progress_bar_impl.hpp"
 
@@ -118,56 +128,56 @@ namespace mamba
     void PackageDownloadExtractTarget::validate()
     {
         m_validation_result = VALIDATION_RESULT::VALID;
-        if (m_expected_size && size_t(m_target->downloaded_size) != m_expected_size)
-        {
-            LOG_ERROR << "File not valid: file size doesn't match expectation " << m_tarball_path
-                      << "\nExpected: " << m_expected_size
-                      << "\nActual: " << size_t(m_target->downloaded_size) << "\n";
-            if (m_has_progress_bars)
-            {
-                m_download_bar.set_postfix("validation failed");
-                m_download_bar.mark_as_completed();
-            }
-            Console::instance().print(m_filename + " tarball has incorrect size");
-            m_validation_result = SIZE_ERROR;
-            return;
-        }
+        // if (m_expected_size && size_t(m_target->downloaded_size) != m_expected_size)
+        // {
+        //     LOG_ERROR << "File not valid: file size doesn't match expectation " << m_tarball_path
+        //               << "\nExpected: " << m_expected_size
+        //               << "\nActual: " << size_t(m_target->downloaded_size) << "\n";
+        //     if (m_has_progress_bars)
+        //     {
+        //         m_download_bar.set_postfix("validation failed");
+        //         m_download_bar.mark_as_completed();
+        //     }
+        //     Console::instance().print(m_filename + " tarball has incorrect size");
+        //     m_validation_result = SIZE_ERROR;
+        //     return;
+        // }
         interruption_point();
 
-        if (!m_sha256.empty())
-        {
-            auto sha256sum = validate::sha256sum(m_tarball_path);
-            if (m_sha256 != sha256sum)
-            {
-                m_validation_result = SHA256_ERROR;
-                if (m_has_progress_bars)
-                {
-                    m_download_bar.set_postfix("validation failed");
-                    m_download_bar.mark_as_completed();
-                }
-                Console::instance().print(m_filename + " tarball has incorrect checksum");
-                LOG_ERROR << "File not valid: SHA256 sum doesn't match expectation "
-                          << m_tarball_path << "\nExpected: " << m_sha256
-                          << "\nActual: " << sha256sum << "\n";
-            }
-            return;
-        }
-        if (!m_md5.empty())
-        {
-            auto md5sum = validate::md5sum(m_tarball_path);
-            if (m_md5 != md5sum)
-            {
-                m_validation_result = MD5SUM_ERROR;
-                if (m_has_progress_bars)
-                {
-                    m_download_bar.set_postfix("validation failed");
-                    m_download_bar.mark_as_completed();
-                }
-                Console::instance().print(m_filename + " tarball has incorrect checksum");
-                LOG_ERROR << "File not valid: MD5 sum doesn't match expectation " << m_tarball_path
-                          << "\nExpected: " << m_md5 << "\nActual: " << md5sum << "\n";
-            }
-        }
+        // if (!m_sha256.empty())
+        // {
+        //     auto sha256sum = validate::sha256sum(m_tarball_path);
+        //     if (m_sha256 != sha256sum)
+        //     {
+        //         m_validation_result = SHA256_ERROR;
+        //         if (m_has_progress_bars)
+        //         {
+        //             m_download_bar.set_postfix("validation failed");
+        //             m_download_bar.mark_as_completed();
+        //         }
+        //         Console::instance().print(m_filename + " tarball has incorrect checksum");
+        //         LOG_ERROR << "File not valid: SHA256 sum doesn't match expectation "
+        //                   << m_tarball_path << "\nExpected: " << m_sha256
+        //                   << "\nActual: " << sha256sum << "\n";
+        //     }
+        //     return;
+        // }
+        // if (!m_md5.empty())
+        // {
+        //     auto md5sum = validate::md5sum(m_tarball_path);
+        //     if (m_md5 != md5sum)
+        //     {
+        //         m_validation_result = MD5SUM_ERROR;
+        //         if (m_has_progress_bars)
+        //         {
+        //             m_download_bar.set_postfix("validation failed");
+        //             m_download_bar.mark_as_completed();
+        //         }
+        //         Console::instance().print(m_filename + " tarball has incorrect checksum");
+        //         LOG_ERROR << "File not valid: MD5 sum doesn't match expectation " << m_tarball_path
+        //                   << "\nExpected: " << m_md5 << "\nActual: " << md5sum << "\n";
+        //     }
+        // }
     }
 
     std::function<void(ProgressBarRepr&)> PackageDownloadExtractTarget::extract_repr()
@@ -195,12 +205,12 @@ namespace mamba
         // Extracting is __not__ yet thread safe it seems...
         interruption_point();
 
-        if (m_has_progress_bars)
-            m_extract_bar.start();
+        // if (m_has_progress_bars)
+        //     m_extract_bar.start();
 
         LOG_DEBUG << "Waiting for decompression " << m_tarball_path;
-        if (m_has_progress_bars)
-            m_extract_bar.update_progress(0, 1);
+        // if (m_has_progress_bars)
+        //     m_extract_bar.update_progress(0, 1);
         {
             std::lock_guard<counting_semaphore> lock(DownloadExtractSemaphore::semaphore);
             interruption_point();
@@ -306,16 +316,16 @@ namespace mamba
 
     bool PackageDownloadExtractTarget::finalize_callback()
     {
-        if (m_has_progress_bars)
-        {
-            m_download_bar.repr().postfix.set_value("Downloaded").deactivate();
-            m_download_bar.mark_as_completed();
-        }
-
-        if (m_target->http_status >= 400)
+        // if (m_has_progress_bars)
+        // {
+        //     m_download_bar.repr().postfix.set_value("Downloaded").deactivate();
+        //     m_download_bar.mark_as_completed();
+        // }
+        const auto maybe_error = m_target->get_error();
+        if (maybe_error && maybe_error.value().is_serious())
         {
             LOG_ERROR << "Failed to download package from " << m_url << " (status "
-                      << m_target->http_status << ")";
+                      << maybe_error.value() << ")";
             m_validation_result = VALIDATION_RESULT::UNDEFINED;
             return false;
         }
@@ -357,7 +367,7 @@ namespace mamba
     }
 
     // todo remove cache from this interface
-    DownloadTarget* PackageDownloadExtractTarget::target(MultiPackageCache& caches)
+    std::shared_ptr<powerloader::DownloadTarget> PackageDownloadExtractTarget::target(MultiPackageCache& caches)
     {
         // tarball can be removed, it's fine if only the correct dest dir exists
         // 1. If there is extracted cache, use it, otherwise next.
@@ -400,18 +410,29 @@ namespace mamba
                 LOG_DEBUG << "Adding '" << m_name << "' to download targets from '" << m_url << "'";
 
                 m_tarball_path = m_cache_path / m_filename;
-                m_target = std::make_unique<DownloadTarget>(m_name, m_url, m_tarball_path.string());
-                m_target->set_finalize_callback(&PackageDownloadExtractTarget::finalize_callback,
-                                                this);
+                m_target = std::make_shared<powerloader::DownloadTarget>(m_url, "", m_tarball_path);
+
+                m_target->set_end_callback([this](powerloader::TransferStatus status, const powerloader::Response& response) -> powerloader::CbReturnCode
+                {
+                    spdlog::warn("Status {} -- msg: {}", static_cast<int>(status), response.content ? std::string("<none>") : response.content.value() );
+                    if (status == powerloader::TransferStatus::kSUCCESSFUL)
+                    {
+                        this->finalize_callback();
+                    }
+                    return powerloader::CbReturnCode::kOK;
+                });
+
                 m_target->set_expected_size(m_expected_size);
+                m_target->add_checksum(powerloader::Checksum{powerloader::ChecksumType::kSHA256, m_sha256});
+
                 if (m_has_progress_bars)
                 {
                     m_download_bar = Console::instance().add_progress_bar(m_name, m_expected_size);
-                    m_target->set_progress_bar(m_download_bar);
+                    // m_target->set_progress_bar(m_download_bar);
                     Console::instance().progress_bar_manager().add_label("Download",
                                                                          m_download_bar);
                 }
-                return m_target.get();
+                return m_target;
             }
         }
         LOG_DEBUG << "Using cached '" << m_name << "'";
@@ -1110,7 +1131,7 @@ namespace mamba
     bool MTransaction::fetch_extract_packages()
     {
         std::vector<std::unique_ptr<PackageDownloadExtractTarget>> targets;
-        MultiDownloadTarget multi_dl;
+        powerloader::Downloader multi_dl;
 
         auto& pbar_manager
             = Console::instance().init_progress_bar_manager(ProgressBarMode::aggregated);
@@ -1140,7 +1161,7 @@ namespace mamba
             }
 
             targets.emplace_back(std::make_unique<PackageDownloadExtractTarget>(s));
-            DownloadTarget* download_target = targets.back()->target(m_multi_cache);
+            std::shared_ptr<powerloader::DownloadTarget> download_target = targets.back()->target(m_multi_cache);
             if (download_target != nullptr)
                 multi_dl.add(download_target);
         }
@@ -1226,7 +1247,8 @@ namespace mamba
             pbar_manager.watch_print();
         }
 
-        bool downloaded = multi_dl.download(MAMBA_DOWNLOAD_FAILFAST | MAMBA_DOWNLOAD_SORT);
+        // bool downloaded = multi_dl.download(MAMBA_DOWNLOAD_FAILFAST | MAMBA_DOWNLOAD_SORT);
+        bool downloaded = multi_dl.download();
         bool all_valid = true;
 
         if (!downloaded)
