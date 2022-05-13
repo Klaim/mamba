@@ -207,17 +207,29 @@ namespace mamba
                && prefix.end() == std::mismatch(prefix.begin(), prefix.end(), vec.begin()).first;
     }
 
+    namespace details
+    {
+        struct PlusEqual
+        {
+            template<typename T, typename U>
+            auto operator()(T& left, const U& right)
+            {
+                left += right;
+            }
+        };
+    }
 
-    template <class S>
-    inline std::string join(const char* j, const S& container)
+    template <class S, class Joiner = details::PlusEqual>
+    auto join(const char* j, const S& container, Joiner joiner = details::PlusEqual{})
+        -> typename S::value_type
     {
         if (container.empty())
-            return "";
-        std::string result = container[0];
+            return {};
+        auto result = container[0];
         for (std::size_t i = 1; i < container.size(); ++i)
         {
-            result += j;
-            result += container[i];
+            joiner(result, j);
+            joiner(result, container[i]);
         }
         return result;
     }

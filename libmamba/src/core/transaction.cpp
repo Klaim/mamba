@@ -340,7 +340,7 @@ namespace mamba
     void PackageDownloadExtractTarget::clear_cache() const
     {
         fs::remove_all(m_tarball_path);
-        fs::path dest_dir = strip_package_extension(m_tarball_path);
+        fs::path dest_dir = strip_package_extension(m_tarball_path.string());
         if (fs::exists(dest_dir))
         {
             fs::remove_all(dest_dir);
@@ -401,7 +401,7 @@ namespace mamba
                 LOG_DEBUG << "Adding '" << m_name << "' to download targets from '" << m_url << "'";
 
                 m_tarball_path = m_cache_path / m_filename;
-                m_target = std::make_unique<DownloadTarget>(m_name, m_url, m_tarball_path);
+                m_target = std::make_unique<DownloadTarget>(m_name, m_url, m_tarball_path.string());
                 m_target->set_finalize_callback(&PackageDownloadExtractTarget::finalize_callback,
                                                 this);
                 m_target->set_expected_size(m_expected_size);
@@ -536,7 +536,7 @@ namespace mamba
         if (!empty())
         {
             Console::instance().json_down("actions");
-            Console::instance().json_write({ { "PREFIX", Context::instance().target_prefix } });
+            Console::instance().json_write({ { "PREFIX", Context::instance().target_prefix.string() } });
         }
         queue_free(&q);
         queue_free(&decision);
@@ -629,7 +629,7 @@ namespace mamba
         if (!empty())
         {
             Console::instance().json_down("actions");
-            Console::instance().json_write({ { "PREFIX", Context::instance().target_prefix } });
+            Console::instance().json_write({ { "PREFIX", Context::instance().target_prefix.string() } });
         }
 
         m_transaction_context = TransactionContext(
@@ -913,7 +913,7 @@ namespace mamba
         if (!empty())
             Console::instance().json_up();
         Console::instance().json_write(
-            { { "dry_run", ctx.dry_run }, { "prefix", ctx.target_prefix } });
+            { { "dry_run", ctx.dry_run }, { "prefix", ctx.target_prefix.string() } });
         if (empty())
             Console::instance().json_write(
                 { { "message", "All requested packages already installed" } });

@@ -809,7 +809,7 @@ namespace mamba
     {
         if (!Configuration::instance().at("root_prefix").configured() || force)
         {
-            env::set("MAMBA_ROOT_PREFIX", get_conda_root_prefix());
+            env::set("MAMBA_ROOT_PREFIX", get_conda_root_prefix().string());
         }
     }
 
@@ -1851,7 +1851,7 @@ namespace mamba
                     if (!yaml[key] || yaml[key].IsNull())
                         continue;
 
-                    c.set_rc_yaml_value(yaml[key], env::shrink_user(source));
+                    c.set_rc_yaml_value(yaml[key], env::shrink_user(source).string());
                 }
             }
         }

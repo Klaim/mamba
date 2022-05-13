@@ -77,7 +77,7 @@ namespace mamba
             specs_f << d.c_str() << '\n';
         specs_f.close();
 
-        replace_all(install_instructions, "{0}", specs.path());
+        replace_all(install_instructions, "{0}", specs.path().string());
 
         const auto& ctx = Context::instance();
 
@@ -166,7 +166,7 @@ namespace mamba
             YAML::Node f;
             try
             {
-                f = YAML::LoadFile(file);
+                f = YAML::LoadFile(file.string());
             }
             catch (YAML::Exception& e)
             {
@@ -220,7 +220,7 @@ namespace mamba
                             result.others_pkg_mgrs_specs.push_back(
                                 { "pip",
                                   map_el.second.as<std::vector<std::string>>(),
-                                  fs::absolute(yaml_file.parent_path()) });
+                                  fs::absolute(yaml_file.parent_path()).string() });
                             has_pip_deps = true;
                         }
                     }
@@ -568,7 +568,7 @@ namespace mamba
             detail::create_target_directory(prefix);
 
             Console::instance().print(join(
-                "", std::vector<std::string>({ "Empty environment created at prefix: ", prefix })));
+                "", std::vector<std::string>({ "Empty environment created at prefix: ", prefix.string() })));
             Console::instance().json_write({ { "success", true } });
         }
 

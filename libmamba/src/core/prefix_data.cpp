@@ -30,8 +30,7 @@ namespace mamba
         }
         catch (...)
         {
-            return tl::make_unexpected(mamba_error("Unkown error when trying to load prefix data "
-                                                       + std::string(prefix_path),
+            return tl::make_unexpected(mamba_error("Unkown error when trying to load prefix data " + prefix_path.string(),
                                                    mamba_error_code::unknown));
         }
     }
@@ -50,7 +49,7 @@ namespace mamba
         {
             for (auto& p : fs::directory_iterator(conda_meta_dir))
             {
-                if (ends_with(p.path().c_str(), ".json"))
+                if (ends_with(p.path().string(), ".json"))
                 {
                     load_single_record(p.path());
                 }
