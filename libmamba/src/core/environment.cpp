@@ -74,7 +74,7 @@ namespace mamba
 #endif
         }
 
-        fs::path which(const std::string& exe, const std::string& override_path)
+        fs::u8path which(const std::string& exe, const std::string& override_path)
         {
             // TODO maybe add a cache?
             auto env_path = override_path == "" ? env::get("PATH") : override_path;
@@ -175,7 +175,7 @@ namespace mamba
 #endif
         }
 
-        fs::path home_directory()
+        fs::u8path home_directory()
         {
 #ifdef _WIN32
             std::string maybe_home = env::get("USERPROFILE").value_or("");
@@ -203,7 +203,7 @@ namespace mamba
             return maybe_home;
         }
 
-        fs::path expand_user(const fs::path& path)
+        fs::u8path expand_user(const fs::u8path& path)
         {
             auto p = path.string();
             if (p[0] == '~')
@@ -213,7 +213,7 @@ namespace mamba
             return p;
         }
 
-        fs::path shrink_user(const fs::path& path)
+        fs::u8path shrink_user(const fs::u8path& path)
         {
             auto p = path.string();
             auto home = home_directory().string();

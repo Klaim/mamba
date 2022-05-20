@@ -49,13 +49,13 @@ namespace mamba
         bool set(const std::string& key, const std::string& value);
         void unset(const std::string& key);
 
-        fs::path which(const std::string& exe, const std::string& override_path = "");
+        fs::u8path which(const std::string& exe, const std::string& override_path = "");
         std::map<std::string, std::string> copy();
         std::string platform();
-        fs::path home_directory();
+        fs::u8path home_directory();
 
-        fs::path expand_user(const fs::path& path);
-        fs::path shrink_user(const fs::path& path);
+        fs::u8path expand_user(const fs::u8path& path);
+        fs::u8path shrink_user(const fs::u8path& path);
     }
 }
 

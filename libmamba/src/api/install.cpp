@@ -153,7 +153,7 @@ namespace mamba
             return truthy_values()[expr];
         }
 
-        yaml_file_contents read_yaml_file(fs::path yaml_file)
+        yaml_file_contents read_yaml_file(fs::u8path yaml_file)
         {
             auto file = fs::weakly_canonical(env::expand_user(yaml_file));
             if (!fs::exists(file))
@@ -524,7 +524,7 @@ namespace mamba
             }
             PrefixData& prefix_data = exp_prefix_data.value();
 
-            fs::path pkgs_dirs(Context::instance().root_prefix / "pkgs");
+            fs::u8path pkgs_dirs(Context::instance().root_prefix / "pkgs");
             MultiPackageCache pkg_caches({ pkgs_dirs });
 
             auto transaction = create_transaction(pool, pkg_caches);
@@ -553,7 +553,7 @@ namespace mamba
             create_env);
     }
 
-    void install_lockfile_specs(const fs::path& lockfile, bool create_env)
+    void install_lockfile_specs(const fs::u8path& lockfile, bool create_env)
     {
         detail::install_explicit_with_transaction(
             [&](auto& pool, auto& pkg_caches)
@@ -563,16 +563,18 @@ namespace mamba
 
     namespace detail
     {
-        void create_empty_target(const fs::path& prefix)
+        void create_empty_target(const fs::u8path& prefix)
         {
             detail::create_target_directory(prefix);
 
-            Console::instance().print(join(
-                "", std::vector<std::string>({ "Empty environment created at prefix: ", prefix.string() })));
+            Console::instance().print(
+                join("",
+                     std::vector<std::string>(
+                         { "Empty environment created at prefix: ", prefix.string() })));
             Console::instance().json_write({ { "success", true } });
         }
 
-        void create_target_directory(const fs::path prefix)
+        void create_target_directory(const fs::u8path prefix)
         {
             path::touch(prefix / "conda-meta" / "history", true);
         }

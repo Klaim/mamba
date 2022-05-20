@@ -58,7 +58,7 @@ namespace mamba
         out << "    os.execv(args[0], args)\n";
     }
 
-    fs::path pyc_path(const fs::path& py_path, const std::string& py_ver)
+    fs::u8path pyc_path(const fs::u8path& py_path, const std::string& py_ver)
     {
         /*
         This must not return backslashes on Windows as that will break
@@ -77,7 +77,7 @@ namespace mamba
             auto py_file_stem = py_path.stem();
             std::string py_ver_nodot = py_ver;
             replace_all(py_ver_nodot, ".", "");
-            return directory / fs::path("__pycache__")
+            return directory / fs::u8path("__pycache__")
                    / concat(py_file_stem.string(), ".cpython-", py_ver_nodot, ".pyc");
         }
     }
@@ -113,7 +113,7 @@ namespace mamba
             std::smatch match;
             if (std::regex_match(shebang, match, shebang_regex))
             {
-                fs::path shebang_path = match[2].str();
+                fs::u8path shebang_path = match[2].str();
                 LOG_INFO << "New shebang path " << shebang_path;
                 return concat("#!/usr/bin/env ", shebang_path.filename().string(), match[3].str());
             }
@@ -126,16 +126,16 @@ namespace mamba
     }
 
     // for noarch python packages that have entry points
-    auto LinkPackage::create_python_entry_point(const fs::path& path,
+    auto LinkPackage::create_python_entry_point(const fs::u8path& path,
                                                 const python_entry_point_parsed& entry_point)
     {
 #ifdef _WIN32
         // We add -script.py to WIN32, and link the conda.exe launcher which will
         // automatically find the correct script to launch
         std::string win_script = path.string() + "-script.py";
-        fs::path script_path = m_context->target_prefix / win_script;
+        fs::u8path script_path = m_context->target_prefix / win_script;
 #else
-        fs::path script_path = m_context->target_prefix / path;
+        fs::u8path script_path = m_context->target_prefix / path;
 #endif
         if (fs::exists(script_path))
         {
@@ -146,7 +146,7 @@ namespace mamba
         }
         std::ofstream out_file = open_ofstream(script_path);
 
-        fs::path python_path;
+        fs::u8path python_path;
         if (m_context->has_python)
         {
             python_path = m_context->target_prefix / m_context->python_path;
@@ -169,7 +169,7 @@ namespace mamba
         out_file.close();
 
 #ifdef _WIN32
-        fs::path script_exe = path;
+        fs::u8path script_exe = path;
         script_exe.replace_extension("exe");
 
         if (fs::exists(m_context->target_prefix / script_exe))
@@ -228,9 +228,9 @@ namespace mamba
 #endif
     }
 
-    void create_application_entry_point(const fs::path& source_full_path,
-                                        const fs::path& target_full_path,
-                                        const fs::path& python_full_path)
+    void create_application_entry_point(const fs::u8path& source_full_path,
+                                        const fs::u8path& target_full_path,
+                                        const fs::u8path& python_full_path)
     {
         // source_full_path: where the entry point file points to
         // target_full_path: the location of the new entry point file being created
@@ -246,8 +246,9 @@ namespace mamba
         }
 
         std::ofstream out_file = open_ofstream(target_full_path);
-        out_file << "!#" << python_full_path.c_str() << "\n";
-        application_entry_point_template(out_file, win_path_double_escape(source_full_path.string()));
+        out_file << "!#" << python_full_path.string() << "\n";
+        application_entry_point_template(out_file,
+                                         win_path_double_escape(source_full_path.string()));
         out_file.close();
 
         make_executable(target_full_path);
@@ -276,7 +277,7 @@ namespace mamba
     //         fo.write(entry_point)
     //     make_executable(target_full_path)
 
-    std::string get_prefix_messages(const fs::path& prefix)
+    std::string get_prefix_messages(const fs::u8path& prefix)
     {
         auto messages_file = prefix / ".messages.txt";
         if (fs::exists(messages_file))
@@ -303,13 +304,13 @@ namespace mamba
        call the post-link or pre-unlink script and return true / false on success /
        failure
     */
-    bool run_script(const fs::path& prefix,
+    bool run_script(const fs::u8path& prefix,
                     const PackageInfo& pkg_info,
                     const std::string& action = "post-link",
                     const std::string& env_prefix = "",
                     bool activate = false)
     {
-        fs::path path;
+        fs::u8path path;
         if (on_win)
         {
             path = prefix / get_bin_directory_short_path()
@@ -370,7 +371,7 @@ namespace mamba
         else
         {
             // shell_path = 'sh' if 'bsd' in sys.platform else 'bash'
-            fs::path shell_path = env::which("bash");
+            fs::u8path shell_path = env::which("bash");
             if (shell_path.empty())
             {
                 shell_path = env::which("sh");
@@ -453,7 +454,7 @@ namespace mamba
     }
 
     UnlinkPackage::UnlinkPackage(const PackageInfo& pkg_info,
-                                 const fs::path& cache_path,
+                                 const fs::u8path& cache_path,
                                  TransactionContext* context)
         : m_pkg_info(pkg_info)
         , m_cache_path(cache_path)
@@ -465,7 +466,7 @@ namespace mamba
     bool UnlinkPackage::unlink_path(const nlohmann::json& path_data)
     {
         std::string subtarget = path_data["_path"].get<std::string>();
-        fs::path dst = m_context->target_prefix / subtarget;
+        fs::u8path dst = m_context->target_prefix / subtarget;
 
         LOG_TRACE << "Unlinking '" << dst.string() << "'";
         std::error_code err;
@@ -507,7 +508,7 @@ namespace mamba
     bool UnlinkPackage::execute()
     {
         // find the recorded JSON file
-        fs::path json = m_context->target_prefix / "conda-meta" / (m_specifier + ".json");
+        fs::u8path json = m_context->target_prefix / "conda-meta" / (m_specifier + ".json");
         LOG_INFO << "Unlinking package '" << m_specifier << "'";
         LOG_DEBUG << "Use metadata found at '" << json.string() << "'";
 
@@ -540,7 +541,7 @@ namespace mamba
     }
 
     LinkPackage::LinkPackage(const PackageInfo& pkg_info,
-                             const fs::path& cache_path,
+                             const fs::u8path& cache_path,
                              TransactionContext* context)
         : m_pkg_info(pkg_info)
         , m_cache_path(cache_path)
@@ -554,7 +555,7 @@ namespace mamba
     {
         std::string subtarget = path_data.path;
         LOG_TRACE << "linking '" << subtarget << "'";
-        fs::path dst, rel_dst;
+        fs::u8path dst, rel_dst;
         if (noarch_python)
         {
             rel_dst = get_python_noarch_target_path(subtarget, m_context->site_packages_path);
@@ -566,7 +567,7 @@ namespace mamba
             dst = m_context->target_prefix / rel_dst;
         }
 
-        fs::path src = m_source / subtarget;
+        fs::u8path src = m_source / subtarget;
         if (!fs::exists(dst.parent_path()))
         {
             fs::create_directories(dst.parent_path());
@@ -785,16 +786,17 @@ namespace mamba
             throw std::runtime_error(std::string("Path type not implemented: ")
                                      + std::to_string(static_cast<int>(path_data.path_type)));
         }
-        return std::make_tuple(
-            path_data.sha256.empty() ? validate::sha256sum(dst) : path_data.sha256, rel_dst.string());
+        return std::make_tuple(path_data.sha256.empty() ? validate::sha256sum(dst)
+                                                        : path_data.sha256,
+                               rel_dst.string());
     }
 
-    std::vector<fs::path> LinkPackage::compile_pyc_files(const std::vector<fs::path>& py_files)
+    std::vector<fs::u8path> LinkPackage::compile_pyc_files(const std::vector<fs::u8path>& py_files)
     {
         if (py_files.size() == 0)
             return {};
 
-        std::vector<fs::path> pyc_files;
+        std::vector<fs::u8path> pyc_files;
         for (auto& f : py_files)
         {
             pyc_files.push_back(pyc_path(f, m_context->short_python_version));
@@ -967,7 +969,7 @@ namespace mamba
 
         if (noarch_type == NoarchType::PYTHON)
         {
-            fs::path link_json_path = m_source / "info" / "link.json";
+            fs::u8path link_json_path = m_source / "info" / "link.json";
             nlohmann::json link_json;
             if (fs::exists(link_json_path))
             {
@@ -975,7 +977,7 @@ namespace mamba
                 link_json_file >> link_json;
             }
 
-            std::vector<fs::path> for_compilation;
+            std::vector<fs::u8path> for_compilation;
             static std::regex py_file_re("^site-packages[/\\\\][^\\t\\n\\r\\f\\v]+\\.py$");
             for (auto& sub_path_json : paths_data)
             {
@@ -986,8 +988,8 @@ namespace mamba
                 }
             }
 
-            std::vector<fs::path> pyc_files = compile_pyc_files(for_compilation);
-            for (const fs::path& pyc_path : pyc_files)
+            std::vector<fs::u8path> pyc_files = compile_pyc_files(for_compilation);
+            for (const fs::u8path& pyc_path : pyc_files)
             {
                 out_json["paths_data"]["paths"].push_back(
                     { { "_path", pyc_path.string() }, { "path_type", "pyc_file" } });
@@ -1040,7 +1042,7 @@ namespace mamba
 
         run_script(m_context->target_prefix, m_pkg_info, "post-link", "", true);
 
-        fs::path prefix_meta = m_context->target_prefix / "conda-meta";
+        fs::u8path prefix_meta = m_context->target_prefix / "conda-meta";
         if (!fs::exists(prefix_meta))
         {
             fs::create_directory(prefix_meta);

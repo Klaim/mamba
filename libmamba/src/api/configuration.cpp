@@ -419,7 +419,7 @@ namespace mamba
             file_spec_env_name_hook(name);
 
             auto& config = Configuration::instance();
-            auto& root_prefix = config.at("root_prefix").value<fs::path>();
+            auto& root_prefix = config.at("root_prefix").value<fs::u8path>();
 
             auto& env_name = config.at("env_name");
 
@@ -442,7 +442,7 @@ namespace mamba
 
             if (!name.empty())
             {
-                fs::path prefix;
+                fs::u8path prefix;
                 if (name == "base")
                 {
                     prefix = root_prefix;
@@ -454,7 +454,7 @@ namespace mamba
 
                 if (!config.at("target_prefix").cli_configured()
                     && config.at("env_name").cli_configured())
-                    config.at("target_prefix").set_cli_value<fs::path>(prefix);
+                    config.at("target_prefix").set_cli_value<fs::u8path>(prefix);
 
                 if (!config.at("target_prefix").api_configured()
                     && config.at("env_name").api_configured())
@@ -462,10 +462,10 @@ namespace mamba
             }
         }
 
-        void target_prefix_hook(fs::path& prefix)
+        void target_prefix_hook(fs::u8path& prefix)
         {
             auto& config = Configuration::instance();
-            auto& root_prefix = config.at("root_prefix").value<fs::path>();
+            auto& root_prefix = config.at("root_prefix").value<fs::u8path>();
 
             if (!prefix.empty())
             {
@@ -506,7 +506,7 @@ namespace mamba
             }
         }
 
-        void root_prefix_hook(fs::path& prefix)
+        void root_prefix_hook(fs::u8path& prefix)
         {
             auto& env_name = Configuration::instance().at("env_name");
 
@@ -558,7 +558,7 @@ namespace mamba
         void rc_loading_hook(const RCConfigLevel& level)
         {
             auto& config = Configuration::instance();
-            auto& rc_files = config.at("rc_files").value<std::vector<fs::path>>();
+            auto& rc_files = config.at("rc_files").value<std::vector<fs::u8path>>();
             config.set_rc_values(rc_files, level);
         }
 
@@ -662,7 +662,7 @@ namespace mamba
             }
         }
 
-        void rc_files_hook(std::vector<fs::path>& files)
+        void rc_files_hook(std::vector<fs::u8path>& files)
         {
             auto& ctx = Context::instance();
 
@@ -728,12 +728,12 @@ namespace mamba
             }
         }
 
-        std::vector<fs::path> fallback_envs_dirs_hook()
+        std::vector<fs::u8path> fallback_envs_dirs_hook()
         {
             return { Context::instance().root_prefix / "envs" };
         }
 
-        void envs_dirs_hook(std::vector<fs::path>& dirs)
+        void envs_dirs_hook(std::vector<fs::u8path>& dirs)
         {
             for (auto& d : dirs)
             {
@@ -746,21 +746,21 @@ namespace mamba
             }
         }
 
-        std::vector<fs::path> fallback_pkgs_dirs_hook()
+        std::vector<fs::u8path> fallback_pkgs_dirs_hook()
         {
-            std::vector<fs::path> paths = { Context::instance().root_prefix / "pkgs",
-                                            env::home_directory() / ".mamba" / "pkgs" };
+            std::vector<fs::u8path> paths = { Context::instance().root_prefix / "pkgs",
+                                              env::home_directory() / ".mamba" / "pkgs" };
 #ifdef _WIN32
             auto appdata = env::get("APPDATA");
             if (appdata)
             {
-                paths.push_back(fs::path(appdata.value()) / ".mamba" / "pkgs");
+                paths.push_back(fs::u8path(appdata.value()) / ".mamba" / "pkgs");
             }
 #endif
             return paths;
         }
 
-        void pkgs_dirs_hook(std::vector<fs::path>& dirs)
+        void pkgs_dirs_hook(std::vector<fs::u8path>& dirs)
         {
             for (auto& d : dirs)
             {
@@ -786,7 +786,7 @@ namespace mamba
         }
     }
 
-    fs::path get_conda_root_prefix()
+    fs::u8path get_conda_root_prefix()
     {
         std::vector<std::string> args = { "conda", "config", "--show", "root_prefix", "--json" };
         std::string out, err;
@@ -823,13 +823,12 @@ namespace mamba
     {
         bool has_config_name(const std::string& file)
         {
-            return fs::path(file).filename() == ".condarc" || fs::path(file).filename() == "condarc"
-                   || fs::path(file).filename() == ".mambarc"
-                   || fs::path(file).filename() == "mambarc" || ends_with(file, ".yml")
-                   || ends_with(file, ".yaml");
+            const auto filename = fs::u8path(file).filename();
+            return filename == ".condarc" || filename == "condarc" || filename == ".mambarc"
+                   || filename == "mambarc" || ends_with(file, ".yml") || ends_with(file, ".yaml");
         }
 
-        bool is_config_file(const fs::path& path)
+        bool is_config_file(const fs::u8path& path)
         {
             return fs::exists(path) && (!fs::is_directory(path)) && has_config_name(path.string());
         }
@@ -1518,7 +1517,7 @@ namespace mamba
                     not be considered as logs (see log_level).)")));
 
         // Config
-        insert(Configurable("rc_files", std::vector<fs::path>({}))
+        insert(Configurable("rc_files", std::vector<fs::u8path>({}))
                    .group("Config sources")
                    .set_env_var_names({ "MAMBARC", "CONDARC" })
                    .needs({ "no_rc" })
@@ -1575,11 +1574,11 @@ namespace mamba
         return res;
     }
 
-    std::vector<fs::path> Configuration::compute_default_rc_sources(const RCConfigLevel& level)
+    std::vector<fs::u8path> Configuration::compute_default_rc_sources(const RCConfigLevel& level)
     {
         auto& ctx = Context::instance();
 
-        std::vector<fs::path> system;
+        std::vector<fs::u8path> system;
         if constexpr (on_mac || on_linux)
         {
             system = { "/etc/conda/.condarc",       "/etc/conda/condarc",
@@ -1595,23 +1594,23 @@ namespace mamba
                        "C:\\ProgramData\\conda\\.mambarc" };
         }
 
-        std::vector<fs::path> root = { ctx.root_prefix / ".condarc",
-                                       ctx.root_prefix / "condarc",
-                                       ctx.root_prefix / "condarc.d",
-                                       ctx.root_prefix / ".mambarc" };
+        std::vector<fs::u8path> root = { ctx.root_prefix / ".condarc",
+                                         ctx.root_prefix / "condarc",
+                                         ctx.root_prefix / "condarc.d",
+                                         ctx.root_prefix / ".mambarc" };
 
-        std::vector<fs::path> home = { env::home_directory() / ".conda/.condarc",
-                                       env::home_directory() / ".conda/condarc",
-                                       env::home_directory() / ".conda/condarc.d",
-                                       env::home_directory() / ".condarc",
-                                       env::home_directory() / ".mambarc" };
+        std::vector<fs::u8path> home = { env::home_directory() / ".conda/.condarc",
+                                         env::home_directory() / ".conda/condarc",
+                                         env::home_directory() / ".conda/condarc.d",
+                                         env::home_directory() / ".condarc",
+                                         env::home_directory() / ".mambarc" };
 
-        std::vector<fs::path> prefix = { ctx.target_prefix / ".condarc",
-                                         ctx.target_prefix / "condarc",
-                                         ctx.target_prefix / "condarc.d",
-                                         ctx.target_prefix / ".mambarc" };
+        std::vector<fs::u8path> prefix = { ctx.target_prefix / ".condarc",
+                                           ctx.target_prefix / "condarc",
+                                           ctx.target_prefix / "condarc.d",
+                                           ctx.target_prefix / ".mambarc" };
 
-        std::vector<fs::path> sources;
+        std::vector<fs::u8path> sources;
 
         if (level >= RCConfigLevel::kSystemDir)
             sources.insert(sources.end(), system.begin(), system.end());
@@ -1763,12 +1762,12 @@ namespace mamba
                 c.second.clear_cli_value();
     }
 
-    std::vector<fs::path> Configuration::sources()
+    std::vector<fs::u8path> Configuration::sources()
     {
         return m_sources;
     }
 
-    std::vector<fs::path> Configuration::valid_sources()
+    std::vector<fs::u8path> Configuration::valid_sources()
     {
         return m_valid_sources;
     }
@@ -1791,13 +1790,13 @@ namespace mamba
         }
     }
 
-    YAML::Node Configuration::load_rc_file(const fs::path& file)
+    YAML::Node Configuration::load_rc_file(const fs::u8path& file)
     {
         YAML::Node config;
         try
         {
             std::ifstream inFile;
-            inFile.open(file);
+            inFile.open(file.std_path());
             std::stringstream strStream;
             strStream << inFile.rdbuf();
             std::string s = strStream.str();
@@ -1810,7 +1809,7 @@ namespace mamba
         return config;
     }
 
-    void Configuration::set_rc_values(std::vector<fs::path> possible_rc_paths,
+    void Configuration::set_rc_values(std::vector<fs::u8path> possible_rc_paths,
                                       const RCConfigLevel& level)
     {
         LOG_TRACE << "Get RC files configuration from locations up to "
@@ -1857,12 +1856,12 @@ namespace mamba
         }
     }
 
-    std::vector<fs::path> Configuration::get_existing_rc_sources(
-        const std::vector<fs::path>& possible_rc_paths)
+    std::vector<fs::u8path> Configuration::get_existing_rc_sources(
+        const std::vector<fs::u8path>& possible_rc_paths)
     {
-        std::vector<fs::path> sources;
+        std::vector<fs::u8path> sources;
 
-        for (const fs::path& l : possible_rc_paths)
+        for (const fs::u8path& l : possible_rc_paths)
         {
             if (detail::is_config_file(l))
             {
@@ -1871,7 +1870,7 @@ namespace mamba
             }
             else if (fs::is_directory(l))
             {
-                for (fs::path p : fs::directory_iterator(l))
+                for (fs::u8path p : fs::directory_iterator(l))
                 {
                     if (detail::is_config_file(p))
                     {

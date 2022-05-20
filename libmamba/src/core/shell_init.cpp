@@ -70,7 +70,7 @@ namespace mamba
 
 #ifdef _WIN32
     void init_cmd_exe_registry(const std::wstring& reg_path,
-                               const fs::path& conda_prefix,
+                               const fs::u8path& conda_prefix,
                                bool reverse)
     {
         winreg::RegKey key{ HKEY_CURRENT_USER, reg_path };
@@ -142,8 +142,8 @@ namespace mamba
           env will replace <prefix> or <prefix>/Library (Windows) by a POSIX root '/', breaking the
           PATH.
         */
-        fs::path bash;
-        fs::path parent_process_name = get_process_name_by_pid(getppid());
+        fs::u8path bash;
+        fs::u8path parent_process_name = get_process_name_by_pid(getppid());
         if (contains(parent_process_name.filename().string(), "bash"))
             bash = parent_process_name;
         else
@@ -152,7 +152,8 @@ namespace mamba
 #else
             bash = env::which("bash");
 #endif
-        const std::string command = bash.empty() ? "cygpath" : (bash.parent_path() / "cygpath").string();
+        const std::string command
+            = bash.empty() ? "cygpath" : (bash.parent_path() / "cygpath").string();
         std::string out, err;
         try
         {
@@ -178,9 +179,9 @@ namespace mamba
     }
 
 
-    std::string rcfile_content(const fs::path& env_prefix,
+    std::string rcfile_content(const fs::u8path& env_prefix,
                                const std::string& shell,
-                               const fs::path& mamba_exe)
+                               const fs::u8path& mamba_exe)
     {
         std::stringstream content;
 
@@ -199,7 +200,7 @@ namespace mamba
 
 #else
 
-        fs::path env_bin = env_prefix / "bin";
+        fs::u8path env_bin = env_prefix / "bin";
 
         content << "# >>> mamba initialize >>>\n";
         content << "# !! Contents within this block are managed by 'mamba init' !!\n";
@@ -215,7 +216,7 @@ namespace mamba
                 << " ]; then\n";
         content << "        . " << (env_prefix / "etc" / "profile.d" / "micromamba.sh") << "\n";
         content << "    else\n";
-        content << "        export  PATH=\"" << env_bin.c_str() << ":$PATH\""
+        content << "        export  PATH=\"" << env_bin.string().c_str() << ":$PATH\""
                 << "  # extra space after export prevents interference from conda init\n";
         content << "    fi\n";
         content << "fi\n";
@@ -227,9 +228,9 @@ namespace mamba
 #endif
     }
 
-    std::string xonsh_content(const fs::path& env_prefix,
+    std::string xonsh_content(const fs::u8path& env_prefix,
                               const std::string& /*shell*/,
-                              const fs::path& mamba_exe)
+                              const fs::u8path& mamba_exe)
     {
         std::stringstream content;
         std::string s_mamba_exe;
@@ -263,9 +264,9 @@ namespace mamba
         return content.str();
     }
 
-    std::string fish_content(const fs::path& env_prefix,
+    std::string fish_content(const fs::u8path& env_prefix,
                              const std::string& /*shell*/,
-                             const fs::path& mamba_exe)
+                             const fs::u8path& mamba_exe)
     {
         std::stringstream content;
         std::string s_mamba_exe;
@@ -289,10 +290,10 @@ namespace mamba
         return content.str();
     }
 
-    bool modify_rc_file(const fs::path& file_path,
-                        const fs::path& conda_prefix,
+    bool modify_rc_file(const fs::u8path& file_path,
+                        const fs::u8path& conda_prefix,
                         const std::string& shell,
-                        const fs::path& mamba_exe)
+                        const fs::u8path& mamba_exe)
     {
         Console::stream() << "Modifiying RC file " << file_path
                           << "\nGenerating config for root prefix " << termcolor::bold
@@ -343,7 +344,7 @@ namespace mamba
 
     std::string get_hook_contents(const std::string& shell)
     {
-        fs::path exe = get_self_exe_path();
+        fs::u8path exe = get_self_exe_path();
 
         if (shell == "zsh" || shell == "bash" || shell == "posix")
         {
@@ -384,9 +385,9 @@ namespace mamba
         return "";
     }
 
-    void init_root_prefix_cmdexe(const fs::path& root_prefix)
+    void init_root_prefix_cmdexe(const fs::u8path& root_prefix)
     {
-        fs::path exe = get_self_exe_path();
+        fs::u8path exe = get_self_exe_path();
 
         try
         {
@@ -439,7 +440,7 @@ namespace mamba
         mamba_hook_bat_f << hook_content;
     }
 
-    void init_root_prefix(const std::string& shell, const fs::path& root_prefix)
+    void init_root_prefix(const std::string& shell, const fs::u8path& root_prefix)
     {
         Context::instance().root_prefix = root_prefix;
 
@@ -494,9 +495,9 @@ namespace mamba
         }
     }
 
-    std::string powershell_contents(const fs::path& conda_prefix)
+    std::string powershell_contents(const fs::u8path& conda_prefix)
     {
-        fs::path self_exe = get_self_exe_path();
+        fs::u8path self_exe = get_self_exe_path();
 
         std::stringstream out;
 
@@ -510,7 +511,9 @@ namespace mamba
         return out.str();
     }
 
-    bool init_powershell(const fs::path& profile_path, const fs::path& conda_prefix, bool reverse)
+    bool init_powershell(const fs::u8path& profile_path,
+                         const fs::u8path& conda_prefix,
+                         bool reverse)
     {
         // NB: the user may not have created a profile. We need to check
         //     if the file exists first.
@@ -572,29 +575,29 @@ namespace mamba
         return false;
     }
 
-    void init_shell(const std::string& shell, const fs::path& conda_prefix)
+    void init_shell(const std::string& shell, const fs::u8path& conda_prefix)
     {
         init_root_prefix(shell, conda_prefix);
         auto mamba_exe = get_self_exe_path();
-        fs::path home = env::home_directory();
+        fs::u8path home = env::home_directory();
         if (shell == "bash")
         {
-            fs::path bashrc_path = (on_mac || on_win) ? home / ".bash_profile" : home / ".bashrc";
+            fs::u8path bashrc_path = (on_mac || on_win) ? home / ".bash_profile" : home / ".bashrc";
             modify_rc_file(bashrc_path, conda_prefix, shell, mamba_exe);
         }
         else if (shell == "zsh")
         {
-            fs::path zshrc_path = home / ".zshrc";
+            fs::u8path zshrc_path = home / ".zshrc";
             modify_rc_file(zshrc_path, conda_prefix, shell, mamba_exe);
         }
         else if (shell == "xonsh")
         {
-            fs::path xonshrc_path = home / ".xonshrc";
+            fs::u8path xonshrc_path = home / ".xonshrc";
             modify_rc_file(xonshrc_path, conda_prefix, shell, mamba_exe);
         }
         else if (shell == "fish")
         {
-            fs::path fishrc_path = home / ".config" / "fish" / "config.fish";
+            fs::u8path fishrc_path = home / ".config" / "fish" / "config.fish";
             modify_rc_file(fishrc_path, conda_prefix, shell, mamba_exe);
         }
         else if (shell == "cmd.exe")

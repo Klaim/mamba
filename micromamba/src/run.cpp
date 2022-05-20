@@ -92,7 +92,7 @@ namespace mamba
         }
     }
 
-    const fs::path& proc_dir()
+    const fs::u8path& proc_dir()
     {
         static auto path = env::home_directory() / ".mamba" / "proc";
         return path;
@@ -149,7 +149,7 @@ namespace mamba
 
     class ScopedProcFile
     {
-        const fs::path location;
+        const fs::u8path location;
 
     public:
         ScopedProcFile(const std::string& name,
@@ -160,7 +160,7 @@ namespace mamba
             assert(proc_dir_lock);  // Lock must be hold for the duraction of this constructor.
 
             const auto open_mode = std::ios::binary | std::ios::trunc | std::ios::out;
-            std::ofstream pid_file{ location, open_mode };
+            std::ofstream pid_file(location.std_path(), open_mode);
             if (!pid_file.is_open())
             {
                 throw std::runtime_error(
