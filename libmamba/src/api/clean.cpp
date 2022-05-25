@@ -74,7 +74,7 @@ namespace mamba
                     {
                         if (p.exists() && ends_with(p.path().string(), ".lock")
                             && (fs::exists(rstrip(p.path().string(), ".lock"))
-                                || (rstrip(p.path().filename().u8string(), ".lock")
+                                || (rstrip(p.path().filename().string(), ".lock")
                                     == p.path().parent_path().filename())))
                         {
                             try
