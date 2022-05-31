@@ -9,6 +9,7 @@
 
 #include "mamba/core/mamba_fs.hpp"
 #include "mamba/core/error_handling.hpp"
+#include "mamba/core/util_string.hpp"
 
 #include "nlohmann/json.hpp"
 
@@ -151,49 +152,6 @@ namespace mamba
         bool unlock();
     };
 
-    /*************************
-     * utils for std::string *
-     *************************/
-
-    inline const char* check_char(const char* ptr)
-    {
-        return ptr ? ptr : "";
-    }
-
-    constexpr const char* WHITESPACES(" \r\n\t\f\v");
-
-    bool starts_with(const std::string_view& str, const std::string_view& prefix);
-    bool ends_with(const std::string_view& str, const std::string_view& suffix);
-    bool contains(const std::string_view& str, const std::string_view& sub_str);
-
-    // TODO: add concepts here, or at least some contraints
-    template <typename T, typename AssociativeContainer>
-    auto contains(const AssociativeContainer& values, const T& value_to_find)
-        -> decltype(values.find(value_to_find)
-                    != values.end())  // this should make invalid usage SFINAE
-    {
-        return values.find(value_to_find) != values.end();
-    }
-
-    bool any_starts_with(const std::vector<std::string_view>& str, const std::string_view& prefix);
-
-    bool starts_with_any(const std::string_view& str, const std::vector<std::string_view>& prefix);
-
-    std::string_view strip(const std::string_view& input);
-    std::string_view lstrip(const std::string_view& input);
-    std::string_view rstrip(const std::string_view& input);
-
-    std::string_view strip(const std::string_view& input, const std::string_view& chars);
-    std::string_view lstrip(const std::string_view& input, const std::string_view& chars);
-    std::string_view rstrip(const std::string_view& input, const std::string_view& chars);
-
-    std::vector<std::string> split(const std::string_view& input,
-                                   const std::string_view& sep,
-                                   std::size_t max_split = SIZE_MAX);
-
-    std::vector<std::string> rsplit(const std::string_view& input,
-                                    const std::string_view& sep,
-                                    std::size_t max_split = SIZE_MAX);
 
     void split_package_extension(const std::string& file,
                                  std::string& name,
@@ -207,111 +165,9 @@ namespace mamba
                && prefix.end() == std::mismatch(prefix.begin(), prefix.end(), vec.begin()).first;
     }
 
-    namespace details
-    {
-        struct PlusEqual
-        {
-            template <typename T, typename U>
-            auto operator()(T& left, const U& right)
-            {
-                left += right;
-            }
-        };
-    }
-
-    template <class S, class Joiner = details::PlusEqual>
-    auto join(const char* j, const S& container, Joiner joiner = details::PlusEqual{}) ->
-        typename S::value_type
-    {
-        if (container.empty())
-            return {};
-        auto result = container[0];
-        for (std::size_t i = 1; i < container.size(); ++i)
-        {
-            joiner(result, j);
-            joiner(result, container[i]);
-        }
-        return result;
-    }
-
-    void replace_all(std::string& data, const std::string& search, const std::string& replace);
-
-    void replace_all(std::wstring& data, const std::wstring& search, const std::wstring& replace);
-
-    // Note: this function only works for non-unicode!
-    std::string to_upper(const std::string_view& input);
-    std::string to_lower(const std::string_view& input);
-
     tl::expected<std::string, mamba_error> encode_base64(const std::string_view& input);
     tl::expected<std::string, mamba_error> decode_base64(const std::string_view& input);
 
-    namespace concat_impl
-    {
-        template <class T>
-        inline void concat_foreach(std::string& result, const T& rhs)
-        {
-            result += rhs;
-        }
-
-        template <class T, class... Rest>
-        inline void concat_foreach(std::string& result, const T& rhs, const Rest&... rest)
-        {
-            result += rhs;
-            concat_foreach(result, rest...);
-        }
-
-        struct sizer
-        {
-            inline sizer(const char* s)
-                : size(strlen(s))
-            {
-            }
-
-            inline sizer(const char)
-                : size(1)
-            {
-            }
-
-            template <class T>
-            inline sizer(T& s)
-                : size(s.size())
-            {
-            }
-
-            std::size_t size;
-        };
-    }  // namespace concat_impl
-
-    template <typename... Args>
-    inline std::string concat(const Args&... args)
-    {
-        size_t len = 0;
-        for (auto s : std::initializer_list<concat_impl::sizer>{ args... })
-            len += s.size;
-
-        std::string result;
-        result.reserve(len);
-        concat_impl::concat_foreach(result, args...);
-        return result;
-    }
-
-    template <class B>
-    inline std::string hex_string(const B& buffer, std::size_t size)
-    {
-        std::ostringstream oss;
-        oss << std::hex;
-        for (std::size_t i = 0; i < size; ++i)
-        {
-            oss << std::setw(2) << std::setfill('0') << static_cast<int>(buffer[i]);
-        }
-        return oss.str();
-    }
-
-    template <class B>
-    inline std::string hex_string(const B& buffer)
-    {
-        return hex_string(buffer, buffer.size());
-    }
 
     // get the value corresponding to a key in a JSON object and assign it to target
     // if the key is not found, assign default_value to target
