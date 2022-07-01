@@ -26,8 +26,8 @@
 #include "mamba/core/util_scope.hpp"
 
 
-#include "powerloader/downloader.hpp"
-#include "termcolor/termcolor.hpp"
+#include <powerloader/downloader.hpp>
+#include <termcolor/termcolor.hpp>
 
 extern "C"
 {
@@ -1131,7 +1131,8 @@ namespace mamba
     bool MTransaction::fetch_extract_packages()
     {
         std::vector<std::unique_ptr<PackageDownloadExtractTarget>> targets;
-        powerloader::Downloader multi_dl { mamba::Context::instance(). };
+        powerloader::Context plctx;
+        powerloader::Downloader multi_dl(plctx);
 
         auto& pbar_manager
             = Console::instance().init_progress_bar_manager(ProgressBarMode::aggregated);
