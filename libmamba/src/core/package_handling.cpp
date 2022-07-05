@@ -437,41 +437,6 @@ namespace mamba
         LOG_INFO << "Extracting " << file << " to " << destination;
         extraction_guard g(destination);
 
-        scoped_archive_read a;
-        archive_read_support_format_tar(a);
-        archive_read_support_format_zip(a);
-        archive_read_support_filter_all(a);
-
-        auto lock = LockFile(file);
-        int r = archive_read_open_filename(a, file.string().c_str(), 10240);
-
-        if (r != ARCHIVE_OK)
-        {
-            LOG_ERROR << "Error opening archive: " << archive_error_string(a);
-            throw std::runtime_error(file.string() + " : Could not open archive for reading.");
-        }
-
-        stream_extract_archive(a, destination);
-    }
-
-    namespace
-    {
-        struct conda_extract_context : non_copyable_base
-        {
-            conda_extract_context(scoped_archive_read& source)
-                : source(source)
-                , buffer(ZSTD_DStreamOutSize())
-            {
-            }
-
-            archive* source;
-            std::vector<char> buffer;
-        };
-    }
-
-    void stream_extract_archive(scoped_archive_read& a, const fs::u8path& destination)
-    {
-        auto prev_path = fs::current_path();
         if (!fs::exists(destination))
         {
             fs::create_directories(destination);
@@ -547,7 +512,7 @@ namespace mamba
             }
         }
 
-        fs::current_path(prev_path);
+        // fs::current_path(prev_path);
     }
 
 
