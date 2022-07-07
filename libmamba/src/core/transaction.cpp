@@ -443,6 +443,12 @@ namespace mamba
                 if (m_has_progress_bars)
                 {
                     m_download_bar = Console::instance().add_progress_bar(m_name, m_expected_size);
+                    m_target->set_progress_callback([this](curl_off_t total, curl_off_t done) -> int
+                    {
+                        this->m_download_bar.set_progress(done, total);
+                        return 0;
+                    });
+
                     // m_target->set_progress_bar(m_download_bar);
                     Console::instance().progress_bar_manager().add_label("Download",
                                                                          m_download_bar);
@@ -1214,8 +1220,8 @@ namespace mamba
                             repr.postfix.set_value(
                                 fmt::format("{:<25}", repr.progress_bar().last_active_task()));
                         }
-                        repr.current.set_value(
-                            fmt::format("{:>7}", to_human_readable_filesize(repr.progress_bar().current(), 1)));
+                        repr.current.set_value(fmt::format(
+                            "{:>7}", to_human_readable_filesize(repr.progress_bar().current(), 1)));
                         repr.separator.set_value("/");
 
                         std::string total_str;
