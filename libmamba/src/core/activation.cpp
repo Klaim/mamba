@@ -48,18 +48,18 @@ namespace mamba
 
     std::string Activator::get_default_env(const fs::path& prefix)
     {
-        if (paths_equal(prefix, Context::instance().root_prefix))
+        if (paths_equal(prefix.string(), Context::instance().root_prefix))
         {
             return "base";
         }
         // if ../miniconda3/envs/my_super_env, return `my_super_env`, else path
         if (prefix.parent_path().stem() == "envs")
         {
-            return prefix.stem();
+            return prefix.stem().string();
         }
         else
         {
-            return prefix;
+            return prefix.string();
         }
     }
 
@@ -162,8 +162,8 @@ namespace mamba
             std::string prompt = Context::instance().env_prompt;
             replace_all(prompt, "{default_env}", conda_default_env);
             replace_all(prompt, "{stacked_env}", conda_stacked_env);
-            replace_all(prompt, "{prefix}", prefix);
-            replace_all(prompt, "{name}", prefix.stem());
+            replace_all(prompt, "{prefix}", prefix.string());
+            replace_all(prompt, "{name}", prefix.stem().string());
             return prompt;
         }
         else
@@ -608,7 +608,7 @@ namespace mamba
         std::string new_path = add_prefix_to_path(prefix, old_conda_shlvl);
 
         env_vars_to_export = { { "path", std::string(new_path) },
-                               { "conda_prefix", std::string(prefix) },
+                               { "conda_prefix", prefix.string() },
                                { "conda_shlvl", std::to_string(new_conda_shlvl) },
                                { "conda_default_env", conda_default_env },
                                { "conda_prompt_modifier", conda_prompt_modifier } };

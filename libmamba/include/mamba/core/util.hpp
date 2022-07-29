@@ -264,7 +264,7 @@ namespace mamba
         for (std::size_t i = 1; i < container.size(); ++i)
         {
             result += sep;
-            result += container[i];
+            result += container[i].string();
         }
         return result;
     }
