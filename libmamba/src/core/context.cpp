@@ -18,6 +18,12 @@
 #include "mamba/core/url.hpp"
 #include "mamba/core/execution.hpp"
 
+#include "termcolor/termcolor.hpp"
+
+#include "spdlog/spdlog.h"
+#include "spdlog/sinks/stdout_color_sinks.h"
+#include "spdlog/pattern_formatter.h"
+
 namespace mamba
 {
     class Logger : public spdlog::logger

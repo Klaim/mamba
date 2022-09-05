@@ -355,6 +355,7 @@ macro(libmamba_create_target target_name linkage deps_linkage output_name)
             set(CMAKE_PREFIX_PATH "$ENV{VCPKG_ROOT}/installed/x64-windows-static/")
 
             # For Windows we have a vcpkg based build system right now.
+            find_package(spdlog REQUIRED)
             find_package(LibArchive REQUIRED)
             find_package(CURL CONFIG REQUIRED)
             find_package(yaml-cpp CONFIG REQUIRED)
@@ -372,6 +373,7 @@ macro(libmamba_create_target target_name linkage deps_linkage output_name)
             find_library(LIBSOLVEXT_BUILD_STATICRARIES NAMES solvext_static)
             find_package(reproc++ CONFIG REQUIRED)
             find_package(tl-expected REQUIRED)
+            find_package(powerloader REQUIRED)
 
             find_library(LIBXML2_LIBRARY NAMES libxml2)
             find_library(ICONV_LIBRARY NAMES libiconv iconv)
@@ -400,9 +402,11 @@ macro(libmamba_create_target target_name linkage deps_linkage output_name)
                 ${LIBSOLV_BUILD_STATICRARIES}
                 ${LIBSOLVEXT_BUILD_STATICRARIES}
                 ${sodium_LIBRARY_RELEASE}
+                spdlog
                 reproc++
                 reproc
                 tl::expected
+                libpowerloader
             )
 
             add_compile_definitions(
@@ -418,6 +422,7 @@ macro(libmamba_create_target target_name linkage deps_linkage output_name)
     else ()
         message("   -> Dynamically linking against libmamba (shared) dependencies")
 
+        find_package(spdlog REQUIRED)
         find_library(LIBSOLV_LIBRARIES NAMES solv)
         find_library(LIBSOLVEXT_LIBRARIES NAMES solvext)
         find_package(CURL REQUIRED)
@@ -438,6 +443,7 @@ macro(libmamba_create_target target_name linkage deps_linkage output_name)
             zstd::libzstd_shared
             ${CURL_LIBRARIES}
             ${OPENSSL_LIBRARIES}
+            spdlog
             yaml-cpp
             reproc++
             reproc
@@ -464,14 +470,6 @@ macro(libmamba_create_target target_name linkage deps_linkage output_name)
         PUBLIC
             $<BUILD_INTERFACE:${LIBMAMBA_INCLUDE_DIR}>
             $<INSTALL_INTERFACE:include>
-        PUBLIC # FIXME: THIS IS A HACK
-            $ENV{CONDA_PREFIX}/include  # TODO: replace by find_package
-    )
-
-    target_link_directories(    # TODO: replace by find_package
-        ${target_name}
-        PUBLIC # FIXME: THIS IS A HACK
-            $ENV{CONDA_PREFIX}/lib
     )
 
     if (WIN32)
