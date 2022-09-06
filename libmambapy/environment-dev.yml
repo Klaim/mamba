@@ -9,7 +9,7 @@ dependencies:
   - libsolv >=0.7.18
   - libarchive
   - libsodium
-  - libcurl >=7.86
+  - libcurl
   - gtest
   - gmock
   - cpp-expected
