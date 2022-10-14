@@ -324,7 +324,7 @@ namespace mamba
             }
         }
         const auto success = downloader.download();
-        if(!success)
+        if (!success)
         {
             throw std::runtime_error("channel loading failed");
         }
