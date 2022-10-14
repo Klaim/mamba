@@ -323,7 +323,12 @@ namespace mamba
                 sub_dirs.push_back(std::move(sub_dir));
             }
         }
-        downloader.download();
+        const auto success = downloader.download();
+        if(!success)
+        {
+            throw std::runtime_error("channel loading failed");
+        }
+
         for (auto& sub_dir : sub_dirs)
         {
             sub_dir.create_repo(pool);
