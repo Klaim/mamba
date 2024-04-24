@@ -24,67 +24,6 @@ namespace mamba
         std::atomic<bool> sig_interrupted(false);
     }
 
-#ifndef _WIN32
-    namespace
-    {
-        std::thread::native_handle_type sig_recv_thread;
-        std::atomic<bool> receiver_exists(false);
-    }
-
-    void reset_sig_interrupted()
-    {
-        sig_interrupted.store(false);
-        set_default_signal_handler();
-    }
-
-    int kill_receiver_thread()
-    {
-        if (receiver_exists.load())
-        {
-            pthread_cancel(sig_recv_thread);
-            receiver_exists.store(false);
-            return 0;
-        }
-        return -1;
-    }
-
-    int stop_receiver_thread()
-    {
-        if (receiver_exists.load())
-        {
-            pthread_kill(sig_recv_thread, SIGINT);
-            receiver_exists.store(false);
-            return 0;
-        }
-        return -1;
-    }
-
-    int default_signal_handler(sigset_t sigset)
-    {
-        int signum = 0;
-        // wait until a signal is delivered:
-        sigwait(&sigset, &signum);
-        set_sig_interrupted();
-        return signum;
-    }
-
-    void set_signal_handler(const std::function<void(sigset_t)>& handler)
-    {
-        stop_receiver_thread();
-
-        // block signals in this thread and subsequently
-        // spawned threads
-        sigset_t sigset;
-        sigemptyset(&sigset);
-        sigaddset(&sigset, SIGINT);
-        // sigaddset(&sigset, SIGTERM);
-        pthread_sigmask(SIG_BLOCK, &sigset, nullptr);
-        std::thread receiver(handler, sigset);
-        sig_recv_thread = receiver.native_handle();
-        receiver_exists.store(true);
-        receiver.detach();
-    }
-#endif
     void set_default_signal_handler()
     {
         std::signal(SIGINT, [](int /*signum*/) { set_sig_interrupted(); });
