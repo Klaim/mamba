@@ -33,8 +33,8 @@ namespace mamba
     void reset_sig_interrupted();
 #endif
 
-    void set_default_signal_handler();
-    void restore_previous_signal_handler();
+    signal_handler_t set_default_signal_handler();
+    signal_handler_t restore_previous_signal_handler();
     signal_handler_t previous_signal_handler();
     bool is_sig_interrupted() noexcept;
     void set_sig_interrupted() noexcept;

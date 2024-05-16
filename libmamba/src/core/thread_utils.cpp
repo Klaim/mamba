@@ -87,19 +87,30 @@ namespace mamba
         receiver.detach();
     }
 
-    void set_default_signal_handler()
+    signal_handler_t set_default_signal_handler()
     {
-        previous_handler = set_signal_handler(default_signal_handler);
+        // FIXME: for now we obtain the previous handler this way but ideally
+        // the code should be simliar than the windows verison of this function.
+        previous_handler = std::signal(SIGINT, [](int /*signum*/) {});
+        set_signal_handler(default_signal_handler);
+        return previous_handler.load();
     }
 #else
-    void set_default_signal_handler()
+    signal_handler_t set_default_signal_handler()
     {
-        previous_handler = std::signal(SIGINT, [](int /*signum*/) { set_sig_interrupted(); });
+        previous_handler = std::signal(SIGINT, [](int /*signum*/) {
+            set_sig_interrupted();
+            restore_previous_signal_handler();
+        });
+        return previous_handler.load();
     }
 #endif
-    void restore_previous_signal_handler()
+    signal_handler_t restore_previous_signal_handler()
     {
-        std::signal(SIGINT, previous_handler.exchange(SIG_DFL));
+#ifndef _WIN32
+        stop_receiver_thread();
+#endif
+        return std::signal(SIGINT, previous_handler.exchange(SIG_DFL));
     }
 
     signal_handler_t previous_signal_handler()
