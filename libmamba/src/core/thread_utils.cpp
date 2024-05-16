@@ -98,10 +98,14 @@ namespace mamba
 #else
     signal_handler_t set_default_signal_handler()
     {
-        previous_handler = std::signal(SIGINT, [](int /*signum*/) {
-            set_sig_interrupted();
-            restore_previous_signal_handler();
-        });
+        previous_handler = std::signal(
+            SIGINT,
+            [](int /*signum*/)
+            {
+                set_sig_interrupted();
+                restore_previous_signal_handler();
+            }
+        );
         return previous_handler.load();
     }
 #endif
