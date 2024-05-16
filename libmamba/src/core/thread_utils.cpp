@@ -26,94 +26,30 @@ namespace mamba
         std::atomic<signal_handler_t> previous_handler = SIG_DFL;
     }
 
-#ifndef _WIN32
-    namespace
-    {
-        std::thread::native_handle_type sig_recv_thread;
-        std::atomic<bool> receiver_exists(false);
-    }
-
     void reset_sig_interrupted()
     {
         sig_interrupted.store(false);
         set_default_signal_handler();
     }
 
-    int kill_receiver_thread()
-    {
-        if (receiver_exists.load())
-        {
-            pthread_cancel(sig_recv_thread);
-            receiver_exists.store(false);
-            return 0;
-        }
-        return -1;
-    }
-
-    int stop_receiver_thread()
-    {
-        if (receiver_exists.load())
-        {
-            pthread_kill(sig_recv_thread, SIGINT);
-            receiver_exists.store(false);
-            return 0;
-        }
-        return -1;
-    }
-
-    int default_signal_handler(sigset_t sigset)
-    {
-        int signum = 0;
-        // wait until a signal is delivered:
-        sigwait(&sigset, &signum);
-        sig_interrupted.store(true);
-        return signum;
-    }
-
-    void set_signal_handler(const std::function<void(sigset_t)>& handler)
-    {
-        stop_receiver_thread();
-
-        // block signals in this thread and subsequently
-        // spawned threads
-        sigset_t sigset;
-        sigemptyset(&sigset);
-        sigaddset(&sigset, SIGINT);
-        // sigaddset(&sigset, SIGTERM);
-        pthread_sigmask(SIG_BLOCK, &sigset, nullptr);
-        std::thread receiver(handler, sigset);
-        sig_recv_thread = receiver.native_handle();
-        receiver_exists.store(true);
-        receiver.detach();
-    }
-
     signal_handler_t set_default_signal_handler()
     {
-        // FIXME: for now we obtain the previous handler this way but ideally
-        // the code should be simliar than the windows verison of this function.
-        previous_handler = std::signal(SIGINT, [](int /*signum*/) {});
-        set_signal_handler(default_signal_handler);
-        return previous_handler.load();
+        return set_signal_handler([](int /*signum*/)
+        {
+            set_sig_interrupted();
+            restore_previous_signal_handler();
+        });
     }
-#else
-    signal_handler_t set_default_signal_handler()
+
+    signal_handler_t set_signal_handler(signal_handler_t handler)
     {
-        previous_handler = std::signal(
-            SIGINT,
-            [](int /*signum*/)
-            {
-                set_sig_interrupted();
-                restore_previous_signal_handler();
-            }
-        );
+        previous_handler = std::signal(SIGINT, handler);
         return previous_handler.load();
     }
-#endif
+
+
     signal_handler_t restore_previous_signal_handler()
     {
-#ifndef _WIN32
-        stop_receiver_thread();
-#endif
         return std::signal(SIGINT, previous_handler.exchange(SIG_DFL));
     }
 

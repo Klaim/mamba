@@ -25,14 +25,8 @@ namespace mamba
 
     using signal_handler_t = void (*)(int);
 
-#ifndef _WIN32
-    void set_signal_handler(const std::function<void(sigset_t)>& handler);
-
-    int stop_receiver_thread();
-    int kill_receiver_thread();
+    signal_handler_t set_signal_handler(signal_handler_t handler);
     void reset_sig_interrupted();
-#endif
-
     signal_handler_t set_default_signal_handler();
     signal_handler_t restore_previous_signal_handler();
     signal_handler_t previous_signal_handler();

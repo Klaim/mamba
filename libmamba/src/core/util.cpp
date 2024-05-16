@@ -60,6 +60,7 @@ extern "C"
 #include "mamba/core/thread_utils.hpp"
 #include "mamba/core/util.hpp"
 #include "mamba/core/util_os.hpp"
+#include "mamba/core/util_scope.hpp"
 #include "mamba/fs/filesystem.hpp"
 #include "mamba/util/build.hpp"
 #include "mamba/util/compare.hpp"
@@ -849,18 +850,14 @@ namespace mamba
         auto th = t.native_handle();
 
         int err = 0;
-        set_signal_handler(
-            [&th, &cv, &ret, &err](sigset_t sigset) -> int
-            {
-                int signum = 0;
-                sigwait(&sigset, &signum);
-                pthread_cancel(th);
-                err = EINTR;
-                ret = -1;
-                cv.notify_one();
-                return signum;
-            }
-        );
+
+        set_signal_handler([&](int signum){
+            pthread_cancel(th);
+            err = EINTR;
+            ret = -1;
+            cv.notify_one();
+        });
+        on_scope_exit restore_handler(restore_previous_signal_handler);
 
         MainExecutor::instance().take_ownership(t.extract());
 
@@ -869,12 +866,11 @@ namespace mamba
             if (cv.wait_for(l, timeout) == std::cv_status::timeout)
             {
                 pthread_cancel(th);
-                kill_receiver_thread();
                 err = EINTR;
                 ret = -1;
             }
         }
-        set_default_signal_handler();
+
         errno = err;
 
         return ret;
