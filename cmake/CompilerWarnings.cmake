@@ -70,6 +70,9 @@ function(mamba_target_add_compile_warnings target)
         # Illegal copy-initialization; more than one user-defined conversion has been implicitly
         # applied
         /w14928
+        # Enables stack frame run-time error checking: https://learn.microsoft.com/en-us/cpp/build/reference/rtc-run-time-error-checks?view=msvc-170 - NOPE: only usable with debug builds :/
+        # /RTC1
+        # /RTCs
     )
 
     set(

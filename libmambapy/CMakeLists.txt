@@ -52,6 +52,12 @@ mamba_target_add_compile_warnings(bindings WARNING_AS_ERROR ${MAMBA_WARNING_AS_E
 target_link_libraries(bindings PRIVATE pybind11::pybind11 ${libmamba_target})
 target_compile_features(bindings PRIVATE cxx_std_17)
 
+target_compile_definitions(bindings
+    PRIVATE
+    # Enable runtime standard library iterator checks - cant use because dependencies
+    # _ITERATOR_DEBUG_LEVEL=1
+)
+
 # Installation
 
 if(SKBUILD)

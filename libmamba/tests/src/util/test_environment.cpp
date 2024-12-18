@@ -17,6 +17,7 @@ namespace
 {
     TEST_CASE("get_env")
     {
+        mamba::Context context;
         const auto restore = mambatests::EnvironmentCleaner();
 
         REQUIRE_FALSE(get_env("VAR_THAT_DOES_NOT_EXIST_XYZ").has_value());

@@ -174,8 +174,16 @@ namespace mamba
         spdlog::set_level(convert_log_level(output_params.logging_level));
     }
 
+    void on_segfault(int)
+    {
+        std::cerr << "THIS IS WHERE I WANT TO BE" << std::endl;
+        std::abort();
+    }
+
     Context::Context(const ContextOptions& options)
     {
+        std::signal(SIGSEGV, on_segfault);
+
         on_ci = static_cast<bool>(util::get_env("CI"));
         prefix_params.root_prefix = util::get_env("MAMBA_ROOT_PREFIX").value_or("");
         prefix_params.conda_prefix = prefix_params.root_prefix;
@@ -216,6 +224,10 @@ namespace mamba
         {
             enable_logging();
         }
+
+
+        int* x = nullptr;
+        *x = 42;
     }
 
     Context::~Context() = default;
