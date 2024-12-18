@@ -1,6 +1,13 @@
 #include "mamba/core/error_handling.hpp"
 
+#include <iostream>
+#include <exception>
+#include <csignal>
+
 #include "spdlog/spdlog.h"
+#include <boost/stacktrace.hpp>
+
+
 
 namespace mamba
 {
@@ -94,4 +101,56 @@ namespace mamba
     {
         return tl::make_unexpected(mamba_aggregated_error(std::move(error_list)));
     }
+
+    namespace
+    {
+
+        std::terminate_handler previous_terminate_handler;
+
+        using signal_handler = void (*) (int);
+        signal_handler previous_segfault_handler;
+    }
+
+    void on_segfault(int value)
+    {
+        std::cerr << fmt::format(
+            "############ \n SIGNAL: SIGSEGV (segfault/access-violation) = {} - ABORTING :\n",
+            value
+        ) << boost::stacktrace::stacktrace()
+                  << std::endl;
+        std::abort();
+    }
+
+    void on_terminate()
+    {
+        std::cerr << "############ \n std::terminate - ABORTING :\n"
+                  << boost::stacktrace::stacktrace() << std::endl;
+        std::abort();
+    }
+
+    namespace
+    {
+        struct FailureHandlers
+        {
+            FailureHandlers()
+            {
+                std::cerr << "##### Installing special failure handlers ...... #####" << std::endl;
+                previous_segfault_handler = std::signal(SIGSEGV, on_segfault);
+                previous_terminate_handler = std::set_terminate(on_terminate);
+                std::cerr << "##### Installing special failure handlers - DONE #####" << std::endl;
+            }
+
+            ~FailureHandlers()
+            {
+                std::cerr << "##### Restoring previous special failure handlers ...... #####" << std::endl;
+                std::signal(SIGSEGV, previous_segfault_handler);
+                std::set_terminate(previous_terminate_handler);
+                std::cerr << "##### Restoring previous special failure handlers - DONE #####"
+                          << std::endl;
+            }
+        } failure_handler;
+
+    }
+
+
 }

@@ -113,6 +113,7 @@ endif()
 # ============
 
 find_package(Python3 COMPONENTS Interpreter)
+find_package(boost_stacktrace_windbg CONFIG REQUIRED)
 
 set(
     SHELL_SCRIPTS
@@ -582,6 +583,7 @@ macro(libmamba_create_target target_name linkage output_name)
                     ${LIBLZMA_LIBRARIES}
                     CURL::libcurl
                     ${sodium_LIBRARY_RELEASE}
+                    Boost::stacktrace_windbg
             )
 
             add_compile_definitions(LIBARCHIVE_STATIC CURL_STATICLIB)
@@ -622,6 +624,7 @@ macro(libmamba_create_target target_name linkage output_name)
                 solv::libsolv
                 solv::libsolvext
                 solv::cpp
+                Boost::stacktrace_windbg
         )
         # CMake 3.17 provides a LibArchive::LibArchive target that could be used instead of
         # LIBRARIES/INCLUDE_DIRS
