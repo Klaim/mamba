@@ -454,6 +454,9 @@ macro(libmamba_create_target target_name linkage output_name)
     # For some reasons, using target_compile_definitions does not set the definitions properly
     add_compile_definitions(
         SPDLOG_FMT_EXTERNAL "SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_${BUILD_LOG_LEVEL}"
+
+        # Enable runtime standard library iterator checks - Cannot use this because dependencies need to be built with it too
+        # _ITERATOR_DEBUG_LEVEL=1
     )
 
     if(${linkage_upper} STREQUAL "STATIC")

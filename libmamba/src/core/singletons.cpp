@@ -21,7 +21,7 @@ extern "C"
 namespace mamba
 {
     // WARNING: The order in which the following static objects are defined is important
-    // to maintain inter-singleton dependencies conherent.
+    // to maintain inter-singleton dependencies coherent.
     // Do not move them around lightly.
     //
     // The intent here is to make sure at main() exit that we have all singletons
