@@ -9,6 +9,8 @@ include("../cmake/CompilerWarnings.cmake")
 
 project(libmambapy)
 
+set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
+
 if(NOT TARGET mamba::libmamba)
     find_package(libmamba CONFIG REQUIRED)
     set(libmamba_target mamba::libmamba-dyn)
@@ -21,6 +23,7 @@ find_package(pybind11 REQUIRED)
 
 pybind11_add_module(
     bindings
+    NO_EXTRAS # STOP STRIPPING DEBUG SYMBOLS
     src/libmambapy/bindings/longpath.manifest
     # Entry point to all submodules
     src/libmambapy/bindings/bindings.cpp
