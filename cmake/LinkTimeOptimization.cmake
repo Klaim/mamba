@@ -66,37 +66,37 @@ endfunction()
 # activate LTO, fails if this is not supported by the compiler - "Default" or "Auto": set LTO if
 # supported and the build type is a release.
 function(mamba_target_set_lto target)
-    # Names of option parameters (without arguments)
-    set(options)
-    # Names of named parameters with a single argument
-    set(oneValueArgs MODE)
-    # Names of named parameters with a multiple arguments
-    set(multiValueArgs)
-    cmake_parse_arguments(arg "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
-    # Extra arguments not accounted for
-    if(arg_UNPARSED_ARGUMENTS)
-        message(
-            AUTHOR_WARNING "Unrecoginzed parameter passed to ${CMAKE_CURRENT_FUNCTION}: "
-                           "'${arg_UNPARSED_ARGUMENTS}'"
-        )
-        return()
-    endif()
-
-    mamba_should_lto(RESULT should_lto OUTPUT lto_message)
-    string(TOLOWER ${arg_MODE} arg_MODE_lower)
-    set(valid_default_names "default" "auto" "")
-    if(arg_MODE_lower IN_LIST valid_default_names)
-        set(is_default TRUE)
-    endif()
-
-    if("${arg_MODE}" OR (is_default AND should_lto))
-        message(STATUS "Setting LTO for target ${PROJECT_NAME}::${target}")
-        set_property(TARGET ${arg_TARGET} PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
-    else()
-        if(is_default)
-            message(STATUS "Skipping LTO for target ${PROJECT_NAME}::${target}, ${lto_message}")
-        else()
-            message(STATUS "Skipping LTO for target ${PROJECT_NAME}::${target}")
-        endif()
-    endif()
+    # # Names of option parameters (without arguments)
+    # set(options)
+    # # Names of named parameters with a single argument
+    # set(oneValueArgs MODE)
+    # # Names of named parameters with a multiple arguments
+    # set(multiValueArgs)
+    # cmake_parse_arguments(arg "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+    # # Extra arguments not accounted for
+    # if(arg_UNPARSED_ARGUMENTS)
+    #     message(
+    #         AUTHOR_WARNING "Unrecoginzed parameter passed to ${CMAKE_CURRENT_FUNCTION}: "
+    #                        "'${arg_UNPARSED_ARGUMENTS}'"
+    #     )
+    #     return()
+    # endif()
+#
+    # mamba_should_lto(RESULT should_lto OUTPUT lto_message)
+    # string(TOLOWER ${arg_MODE} arg_MODE_lower)
+    # set(valid_default_names "default" "auto" "")
+    # if(arg_MODE_lower IN_LIST valid_default_names)
+    #     set(is_default TRUE)
+    # endif()
+#
+    # if("${arg_MODE}" OR (is_default AND should_lto))
+    #     message(STATUS "Setting LTO for target ${PROJECT_NAME}::${target}")
+    #     set_property(TARGET ${arg_TARGET} PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
+    # else()
+    #     if(is_default)
+    #         message(STATUS "Skipping LTO for target ${PROJECT_NAME}::${target}, ${lto_message}")
+    #     else()
+    #         message(STATUS "Skipping LTO for target ${PROJECT_NAME}::${target}")
+    #     endif()
+    # endif()
 endfunction()
