@@ -682,6 +682,9 @@ bind_submodule_impl(pybind11::module_ m)
             throw std::runtime_error("Only one Context instance can exist at any time");
         }
 
+        int* k = nullptr;
+        *k = 42;
+
         mambapy::current_singletons = std::make_unique<mambapy::Singletons>(options);
         assert(&mambapy::singletons() == mambapy::current_singletons.get());
         return context_ptr(&mambapy::singletons().context());
