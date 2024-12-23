@@ -80,4 +80,5 @@ else()
         COMPONENT Mamba_Python_Extension
         DESTINATION ${MAMBA_INSTALL_PYTHON_EXT_LIBDIR}
     )
+    install(FILES $<TARGET_PDB_FILE:bindings> DESTINATION ${MAMBA_INSTALL_PYTHON_EXT_LIBDIR} OPTIONAL)
 endif()
