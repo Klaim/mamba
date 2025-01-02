@@ -386,7 +386,7 @@ namespace solv
         std::unique_ptr<void, void (*)(void*)> m_user_debug_callback;
         std::unique_ptr<NamespaceCallbackWrapper> m_user_namespace_callback;
         // Must be deleted before the debug callback
-        std::unique_ptr<::Pool, ObjPool::PoolDeleter> m_pool = nullptr;
+        std::unique_ptr<::Pool, ObjPool::PoolDeleter> m_pool;
     };
 
     /*******************************

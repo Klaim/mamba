@@ -612,6 +612,7 @@ macro(libmamba_create_target target_name linkage output_name)
                 # only version to avoid chasing after the correct fmt version matching the one used
                 # in the bundle
                 spdlog::spdlog_header_only
+                Boost::stacktrace_windbg
             PRIVATE
                 ${LibArchive_LIBRARIES}
                 ${CURL_LIBRARIES}
@@ -624,7 +625,6 @@ macro(libmamba_create_target target_name linkage output_name)
                 solv::libsolv
                 solv::libsolvext
                 solv::cpp
-                Boost::stacktrace_windbg
         )
         # CMake 3.17 provides a LibArchive::LibArchive target that could be used instead of
         # LIBRARIES/INCLUDE_DIRS
