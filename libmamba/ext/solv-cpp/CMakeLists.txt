@@ -15,6 +15,7 @@ target_include_directories(
     PUBLIC $<INSTALL_INTERFACE:include> $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 )
 
+find_package(fmt CONFIG REQUIRED)
 find_package(tl-expected REQUIRED)
 find_package(Libsolv REQUIRED)
 
@@ -25,7 +26,14 @@ else()
     set(LIBSOLV_DEPS solv::libsolv_static solv::libsolvext_static)
 endif()
 
-target_link_libraries(solv-cpp PUBLIC tl::expected ${LIBSOLV_DEPS})
+target_link_libraries(solv-cpp
+    PUBLIC
+        tl::expected
+        ${LIBSOLV_DEPS}
+    PRIVATE
+        fmt::fmt
+        Boost::stacktrace_windbg
+)
 target_compile_features(solv-cpp PUBLIC cxx_std_17)
 
 mamba_target_add_compile_warnings(solv-cpp WARNING_AS_ERROR ${MAMBA_WARNING_AS_ERROR})

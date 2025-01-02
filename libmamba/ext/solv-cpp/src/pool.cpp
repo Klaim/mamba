@@ -10,6 +10,10 @@
 #include <memory>
 #include <stdexcept>
 
+#include <fmt/format.h>
+#include <fmt/ranges.h>
+#include <boost/stacktrace.hpp>
+
 #include <solv/conda.h>
 #include <solv/pool.h>
 #include <solv/poolid.h>
@@ -18,6 +22,26 @@
 #include <solv/selection.h>
 
 #include "solv-cpp/pool.hpp"
+
+template <>
+struct fmt::formatter<boost::stacktrace::frame> : formatter<std::string_view>
+{
+    template <typename FORMAT_CONTEXT>
+    auto format(const boost::stacktrace::frame& rhs, FORMAT_CONTEXT& ctx) const
+    {
+        return fmt::format_to(ctx.out(), "{}:{}\n", rhs.source_file(), rhs.source_line());
+    }
+};
+
+template <>
+struct fmt::formatter<boost::stacktrace::stacktrace> : formatter<std::string_view>
+{
+    template <typename FORMAT_CONTEXT>
+    auto format(const boost::stacktrace::stacktrace& rhs, FORMAT_CONTEXT& ctx) const
+    {
+        return fmt::format_to(ctx.out(), "{}", fmt::join(rhs.as_vector(), "\n"));
+    }
+};
 
 namespace solv
 {
@@ -373,6 +397,43 @@ namespace solv
      *  Implementation of ObjPool  *
      *******************************/
 
+    template <typename F>
+    struct on_scope_exit
+    {
+        F func;
+
+        explicit on_scope_exit(F&& f)
+            : func(std::forward<F>(f))
+        {
+        }
+
+        ~on_scope_exit()
+        {
+            try
+            {
+                func();
+            }
+            catch (const std::exception& ex)
+            {
+                fmt::print("############ \n Scope exit error - ABORTING : {}\n{}", ex.what(), boost::stacktrace::stacktrace());
+                __debugbreak();
+                std::abort();
+            }
+            catch (...)
+            {
+                fmt::print("############ \n Scope exit unknown error - ABORTING :\n{}", boost::stacktrace::stacktrace());
+                __debugbreak();
+                std::abort();
+            }
+        }
+
+        // Deactivate copy & move until we implement moves
+        on_scope_exit(const on_scope_exit&) = delete;
+        on_scope_exit& operator=(const on_scope_exit&) = delete;
+        on_scope_exit(on_scope_exit&&) = delete;
+        on_scope_exit& operator=(on_scope_exit&&) = delete;
+    };
+
     void ObjPool::PoolDeleter::operator()(::Pool* ptr)
     {
         ::pool_free(ptr);
@@ -385,9 +446,18 @@ namespace solv
         , m_pool(::pool_create())
     {
         ObjPoolView::m_pool = m_pool.get();
+        fmt::print("\nKLAIM:  ObjPool::ObjPool() : this = {}, m_pool = {}", fmt::ptr(this), fmt::ptr(ObjPoolView::m_pool));
     }
 
-    ObjPool::~ObjPool() = default;
+    ObjPool::~ObjPool() // = default;
+    {
+        fmt::print("\nKLAIM:  ObjPool::~ObjPool() - BEGIN with explicit pool free : this = {}, m_pool = {}", fmt::ptr(this), fmt::ptr(m_pool.get()) );
+        on_scope_exit _{ [&]{
+            fmt::print("\nKLAIM:  ObjPool::~ObjPool() - END with explicit pool free : this = {} ", fmt::ptr(this) );
+        } };
+
+        m_pool.reset();
+    }
 
     void ObjPool::set_namespace_callback(UserCallback&& callback)
     {

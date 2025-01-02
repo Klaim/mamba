@@ -5,10 +5,31 @@
 #include <csignal>
 
 #include "spdlog/spdlog.h"
+#include <fmt/ranges.h>
+#include <fmt/format.h>
 #include <boost/stacktrace.hpp>
 
 #include "mamba/core/output.hpp"
 
+template <>
+struct fmt::formatter<boost::stacktrace::frame> : formatter<std::string_view>
+{
+    template <typename FORMAT_CONTEXT>
+    auto format(const boost::stacktrace::frame& rhs, FORMAT_CONTEXT& ctx) const
+    {
+        return fmt::format_to(ctx.out(), "{}:{}\n", rhs.source_file(), rhs.source_line());
+    }
+};
+
+template <>
+struct fmt::formatter<boost::stacktrace::stacktrace> : formatter<std::string_view>
+{
+    template <typename FORMAT_CONTEXT>
+    auto format(const boost::stacktrace::stacktrace& rhs, FORMAT_CONTEXT& ctx) const
+    {
+        return fmt::format_to(ctx.out(), "{}", fmt::join(rhs.as_vector(), "\n"));
+    }
+};
 
 namespace mamba
 {
@@ -106,26 +127,23 @@ namespace mamba
 
     void on_segfault(int value)
     {
-        std::cout << fmt::format(
-            "############ \n SIGNAL: SIGSEGV (segfault/access-violation) = {} - ABORTING :\n",
-            value
-        ) << boost::stacktrace::stacktrace()
-                  << std::endl;
+        fmt::print(
+            "############ \n SIGNAL: SIGSEGV (segfault/access-violation) = {} - ABORTING :\n{}",
+            value,
+            boost::stacktrace::stacktrace()
+        );
         std::abort();
     }
 
     void on_terminate()
     {
-        std::cout << "############ \n std::terminate - ABORTING :\n"
-                  << boost::stacktrace::stacktrace() << std::endl;
+        fmt::print("############ \n std::terminate - ABORTING :\n{}", boost::stacktrace::stacktrace());
         std::abort();
     }
 
     void on_quick_exit()
     {
-        std::cout << "############ \n QUICK EXIT:\n"
-                  << boost::stacktrace::stacktrace()
-                  << std::endl;
+        fmt::print("############ \n QUICK EXIT:\n {}", boost::stacktrace::stacktrace());
     }
 
     namespace
@@ -139,21 +157,19 @@ namespace mamba
 
             FailureHandlers()
             {
-                std::cout << "##### Installing special failure handlers ...... #####" << std::endl;
+                fmt::print("##### Installing special failure handlers ...... #####");
                 previous_segfault_handler = std::signal(SIGSEGV, on_segfault);
                 previous_terminate_handler = std::set_terminate(on_terminate);
                 std::at_quick_exit(on_quick_exit);
-                std::cout << "##### Installing special failure handlers - DONE #####" << std::endl;
+                fmt::print("##### Installing special failure handlers - DONE #####");
             }
 
             ~FailureHandlers()
             {
-                std::cout << "##### Restoring previous special failure handlers ...... #####"
-                          << std::endl;
+                fmt::print("##### Restoring previous special failure handlers ...... #####");
                 std::set_terminate(previous_terminate_handler);
                 std::signal(SIGSEGV, previous_segfault_handler);
-                std::cout << "##### Restoring previous special failure handlers - DONE #####"
-                          << std::endl;
+                fmt::print("##### Restoring previous special failure handlers - DONE #####");
             }
         } failure_handlers;
 

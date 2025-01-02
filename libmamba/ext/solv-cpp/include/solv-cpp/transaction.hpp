@@ -32,6 +32,7 @@ namespace solv
     {
     public:
 
+
         /**
          * Create a transaction from a list of solvables to add/remove.
          *
@@ -48,6 +49,7 @@ namespace solv
         [[nodiscard]] static auto from_solver(const ObjPool& pool, const ObjSolver& solver)
             -> ObjTransaction;
 
+        ~ObjTransaction();
         ObjTransaction(const ObjPool& pool);
         ObjTransaction(ObjTransaction&&) noexcept = default;
         ObjTransaction(const ObjTransaction&);
