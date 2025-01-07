@@ -217,6 +217,9 @@ namespace mamba
         {
             enable_logging();
         }
+
+        /*int* k = nullptr;
+        *k = 42;*/
     }
 
     Context::~Context() = default;

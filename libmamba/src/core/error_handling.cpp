@@ -125,25 +125,44 @@ namespace mamba
     }
 
 
+    namespace
+    {
+        void flush_all_standard_output()
+        {
+            std::cout.flush();
+            std::clog.flush();
+            std::cerr.flush();
+        }
+
+        void print_stacktrace()
+        {
+            flush_all_standard_output();
+            std::cerr << boost::stacktrace::stacktrace() << std::endl;
+            flush_all_standard_output();
+        }
+    }
+
     void on_segfault(int value)
     {
-        fmt::print(
-            "############ \n SIGNAL: SIGSEGV (segfault/access-violation) = {} - ABORTING :\n{}",
-            value,
-            boost::stacktrace::stacktrace()
+        std::cerr << fmt::format(
+            "\n\n############ \n SIGNAL: SIGSEGV (segfault/access-violation) = {} - ABORTING :\n",
+            value
         );
+        print_stacktrace();
         std::abort();
     }
 
     void on_terminate()
     {
-        fmt::print("############ \n std::terminate - ABORTING :\n{}", boost::stacktrace::stacktrace());
+        std::cerr << "\n\n############ \n std::terminate - ABORTING :\n";
+        print_stacktrace();
         std::abort();
     }
 
     void on_quick_exit()
     {
-        fmt::print("############ \n QUICK EXIT:\n {}", boost::stacktrace::stacktrace());
+        std::cerr << "\n\n############ \n QUICK EXIT:\n";
+        print_stacktrace();
     }
 
     namespace
@@ -157,19 +176,21 @@ namespace mamba
 
             FailureHandlers()
             {
-                fmt::print("##### Installing special failure handlers ...... #####");
+                std::cerr << fmt::format("##### Installing special failure handlers ...... #####");
                 previous_segfault_handler = std::signal(SIGSEGV, on_segfault);
                 previous_terminate_handler = std::set_terminate(on_terminate);
                 std::at_quick_exit(on_quick_exit);
-                fmt::print("##### Installing special failure handlers - DONE #####");
+                std::cerr << fmt::format("##### Installing special failure handlers - DONE #####");
+                flush_all_standard_output();
             }
 
             ~FailureHandlers()
             {
-                fmt::print("##### Restoring previous special failure handlers ...... #####");
+                std::cerr << fmt::format("##### Restoring previous special failure handlers ...... #####");
                 std::set_terminate(previous_terminate_handler);
                 std::signal(SIGSEGV, previous_segfault_handler);
-                fmt::print("##### Restoring previous special failure handlers - DONE #####");
+                std::cerr << fmt::format("##### Restoring previous special failure handlers - DONE #####");
+                flush_all_standard_output();
             }
         } failure_handlers;
 
