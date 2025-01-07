@@ -16,7 +16,6 @@
 #include "solv-cpp/pool.hpp"
 #include "solv-cpp/solver.hpp"
 #include "solv-cpp/transaction.hpp"
-#include "mamba/core/util_scope.hpp"
 
 #include <boost/stacktrace.hpp>
 
@@ -44,6 +43,23 @@ struct fmt::formatter<boost::stacktrace::stacktrace> : formatter<std::string_vie
 namespace solv
 {
 
+    namespace
+    {
+        void flush_all_standard_output()
+        {
+            std::cout.flush();
+            std::clog.flush();
+            std::cerr.flush();
+        }
+
+        void print_stacktrace()
+        {
+            flush_all_standard_output();
+            std::cerr << boost::stacktrace::stacktrace() << std::endl;
+            flush_all_standard_output();
+        }
+    }
+
     template <typename F>
     struct on_scope_exit
     {
@@ -62,13 +78,15 @@ namespace solv
             }
             catch (const std::exception& ex)
             {
-                fmt::print("############ \n Scope exit error - ABORTING : {}\n{}", ex.what(), boost::stacktrace::stacktrace());
+                std::cerr << fmt::format("############ \n Scope exit error - ABORTING : {}\n", ex.what());
+                print_stacktrace();
                 __debugbreak();
                 std::abort();
             }
             catch (...)
             {
-                fmt::print("############ \n Scope exit unknown error - ABORTING :\n{}", boost::stacktrace::stacktrace());
+                std::cerr << "############ \n Scope exit unknown error - ABORTING :\n";
+                print_stacktrace();
                 __debugbreak();
                 std::abort();
             }
@@ -83,7 +101,7 @@ namespace solv
 
     void ObjTransaction::TransactionDeleter::operator()(::Transaction* ptr)
     {
-        fmt::print("\nKLAIM DEBUG: ObjTransaction::TransactionDeleter::operator()({}) - BEGIN", fmt::ptr(ptr) );
+        std::cerr << fmt::format("\nKLAIM DEBUG: ObjTransaction::TransactionDeleter::operator()({}) - BEGIN", fmt::ptr(ptr) );
 
         ::transaction_free(ptr);
         //std::memset(ptr, 0, sizeof(::Transaction));
@@ -92,7 +110,7 @@ namespace solv
         const std::ptrdiff_t dead_memory[] = { 0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF };
         std::memcpy(ptr, dead_memory, sizeof(::Transaction)); // might be UB?
 
-        fmt::print("\nKLAIM DEBUG: ObjTransaction::TransactionDeleter::operator()({}) - END", fmt::ptr(ptr) );
+        std::cerr << fmt::format("\nKLAIM DEBUG: ObjTransaction::TransactionDeleter::operator()({}) - END", fmt::ptr(ptr) );
     }
 
     ObjTransaction::ObjTransaction(const ObjPool& pool)
@@ -103,35 +121,49 @@ namespace solv
     ObjTransaction::ObjTransaction(::Transaction* ptr) noexcept
         : m_transaction(ptr)
     {
-        fmt::print("\nKLAIM: ObjTransaction::ObjTransaction({}) :  this = {}", fmt::ptr(ptr), fmt::ptr(this));
+        std::cerr << fmt::format("\nKLAIM: ObjTransaction::ObjTransaction({}) :  this = {}", fmt::ptr(ptr), fmt::ptr(this));
     }
 
     ObjTransaction::~ObjTransaction()
     {
-        fmt::print("\nKLAIM: ObjTransaction::~ObjTransaction() with explicit transaction reset - BEGIN : this = {}", fmt::ptr(this));
+        std::cerr << fmt::format("\nKLAIM: ObjTransaction::~ObjTransaction() with explicit transaction reset - BEGIN : this = {}", fmt::ptr(this));
         on_scope_exit _{ [&]{
-            fmt::print("\nKLAIM: ObjTransaction::~ObjTransaction() with explicit transaction reset  - END : this = {}", fmt::ptr(this));
+            std::cerr << fmt::format("\nKLAIM: ObjTransaction::~ObjTransaction() with explicit transaction reset  - END : this = {}", fmt::ptr(this));
         } };
         m_transaction.reset();
-        fmt::print("\nKLAIM: ObjTransaction::~ObjTransaction() with explicit transaction reset - overwriting ObjTransaction's memory : this = {}", fmt::ptr(this));
+        std::cerr << fmt::format("\nKLAIM: ObjTransaction::~ObjTransaction() with explicit transaction reset - overwriting ObjTransaction's memory : this = {}", fmt::ptr(this));
         std::memset(this, 0, sizeof(ObjTransaction));
     }
 
     ObjTransaction::ObjTransaction(const ObjTransaction& other)
         : ObjTransaction(::transaction_create_clone(const_cast<::Transaction*>(other.raw())))
     {
+        std::cerr << fmt::format(
+            "\nKLAIM: ObjTransaction::ObjTransaction({}) - COPY : this = {}, original transaction = {}, cloned transaction = {}",
+            fmt::ptr(std::addressof(other)),
+            fmt::ptr(this),
+            fmt::ptr(other.m_transaction.get()),
+            fmt::ptr(m_transaction.get())
+        );
     }
 
     auto ObjTransaction::operator=(const ObjTransaction& other) -> ObjTransaction&
     {
         *this = ObjTransaction(other);
+        std::cerr << fmt::format(
+            "\nKLAIM: ObjTransaction::operator=({}) - COPY : this = {}, original transaction = {}, cloned transaction = {}",
+            fmt::ptr(std::addressof(other)),
+            fmt::ptr(this),
+            fmt::ptr(other.m_transaction.get()),
+            fmt::ptr(m_transaction.get())
+        );
         return *this;
     }
 
     auto
     ObjTransaction::from_solvables(const ObjPool& pool, const ObjQueue& solvables) -> ObjTransaction
     {
-        fmt::print("\nKLAIM: from_solvables(pool, solvables) : pool.raw() = {}, solvables.raw() = {}", fmt::ptr(pool.raw()), fmt::ptr(solvables.raw()));
+        std::cerr << fmt::format("\nKLAIM: from_solvables(pool, solvables) : pool.raw() = {}, solvables.raw() = {}", fmt::ptr(pool.raw()), fmt::ptr(solvables.raw()));
         on_scope_exit _{ [&] {
             std::cerr <<fmt::format("\nKLAIM: from_solvables(pool, solvables) : pool.raw() = {}, solvables.raw() = {}", fmt::ptr(pool.raw()), fmt::ptr(solvables.raw()));
         } };
@@ -148,14 +180,14 @@ namespace solv
         void
         assert_same_pool([[maybe_unused]] const ObjPool& pool, [[maybe_unused]] const ObjTransaction& trans)
         {
-            fmt::print("\nKLAIM: assert_same_pool(pool, solvables) : pool.raw() = {}, trans.raw() = {}", fmt::ptr(pool.raw()), fmt::ptr(trans.raw()));
+            std::cerr << fmt::format("\nKLAIM: assert_same_pool(pool, solvables) : pool.raw() = {}, trans.raw() = {}", fmt::ptr(pool.raw()), fmt::ptr(trans.raw()));
             assert(pool.raw() == trans.raw()->pool);
         }
     }
 
     auto ObjTransaction::from_solver(const ObjPool& pool, const ObjSolver& solver) -> ObjTransaction
     {
-        fmt::print("\nKLAIM: ObjTransaction::from_solver({}, solver) - BEGIN: pool.raw() = {}, solver.raw() = {}", fmt::ptr(std::addressof(pool)), fmt::ptr(pool.raw()), fmt::ptr(solver.raw()));
+        std::cerr << fmt::format("\nKLAIM: ObjTransaction::from_solver({}, solver) - BEGIN: pool.raw() = {}, solver.raw() = {}", fmt::ptr(std::addressof(pool)), fmt::ptr(pool.raw()), fmt::ptr(solver.raw()));
 
         on_scope_exit _{ [&] {
             std::cerr << "\nKLAIM: ObjTransaction::from_solver(...) - END" << std::endl;
@@ -197,10 +229,10 @@ namespace solv
     auto ObjTransaction::step_type(const ObjPool& pool, SolvableId step, TransactionMode mode) const
         -> TransactionStepType
     {
-        fmt::print("\nKLAIM: ObjTransaction::step_type(...) - BEGIN : this = {}", fmt::ptr(this));
+        std::cerr << fmt::format("\nKLAIM: ObjTransaction::step_type(...) - BEGIN : this = {}", fmt::ptr(this));
 
         on_scope_exit _{ [&] {
-            fmt::print("\nKLAIM: ObjTransaction::step_type(...) - END : this = {}", fmt::ptr(this));
+            std::cerr << fmt::format("\nKLAIM: ObjTransaction::step_type(...) - END : this = {}", fmt::ptr(this));
         } };
 
         assert_same_pool(pool, *this);
@@ -210,10 +242,10 @@ namespace solv
     auto
     ObjTransaction::step_newer(const ObjPool& pool, SolvableId step) const -> std::optional<SolvableId>
     {
-        fmt::print("\nKLAIM: ObjTransaction::step_newer(...) - BEGIN : this = {}", fmt::ptr(this));
+        std::cerr << fmt::format("\nKLAIM: ObjTransaction::step_newer(...) - BEGIN : this = {}", fmt::ptr(this));
 
         on_scope_exit _{ [&] {
-            fmt::print("\nKLAIM: ObjTransaction::step_newer(...) - END : this = {}", fmt::ptr(this));
+            std::cerr << fmt::format("\nKLAIM: ObjTransaction::step_newer(...) - END : this = {}", fmt::ptr(this));
         } };
 
         assert_same_pool(pool, *this);
@@ -229,10 +261,10 @@ namespace solv
 
     auto ObjTransaction::step_olders(const ObjPool& pool, SolvableId step) const -> ObjQueue
     {
-        fmt::print("\nKLAIM: ObjTransaction::step_olders(...) - BEGIN : this = {}", fmt::ptr(this));
+        std::cerr << fmt::format("\nKLAIM: ObjTransaction::step_olders(...) - BEGIN : this = {}", fmt::ptr(this));
 
         on_scope_exit _{ [&] {
-            fmt::print("\nKLAIM: ObjTransaction::step_olders(...) - END : this = {}", fmt::ptr(this));
+            std::cerr << fmt::format("\nKLAIM: ObjTransaction::step_olders(...) - END : this = {}", fmt::ptr(this));
         } };
 
         assert_same_pool(pool, *this);
@@ -247,24 +279,24 @@ namespace solv
 
     void ObjTransaction::order(const ObjPool& pool, TransactionOrderFlag flag)
     {
-        fmt::print("\nKLAIM: ObjTransaction::order({}, {}) - BEGIN : this = {}", fmt::ptr(std::addressof(pool)), flag, fmt::ptr(this));
+        std::cerr << fmt::format("\nKLAIM: ObjTransaction::order({}, {}) - BEGIN : this = {}", fmt::ptr(std::addressof(pool)), flag, fmt::ptr(this));
         on_scope_exit{ [&]{
-            fmt::print("\nKLAIM: ObjTransaction::order({}, {}) - END (SKIPPED) : this = {}", fmt::ptr(std::addressof(pool)), flag, fmt::ptr(this));
+            std::cerr << fmt::format("\nKLAIM: ObjTransaction::order({}, {}) - END (SKIPPED) : this = {}", fmt::ptr(std::addressof(pool)), flag, fmt::ptr(this));
         }};
         assert_same_pool(pool, *this);
-        fmt::print("\nKLAIM: calling transaction_order now : this = {}", fmt::ptr(std::addressof(pool)), flag, fmt::ptr(this));
+        std::cerr << fmt::format("\nKLAIM: calling transaction_order now : this = {}", fmt::ptr(std::addressof(pool)), flag, fmt::ptr(this));
         ::transaction_order(raw(), flag);
     }
 
     auto ObjTransaction::classify(const ObjPool& pool, TransactionMode mode) const -> ObjQueue
     {
-        fmt::print("\nKLAIM: ObjTransaction::classify({}, {}) - BEGIN : this = {}", fmt::ptr(std::addressof(pool)), mode, fmt::ptr(this));
+        std::cerr << fmt::format("\nKLAIM: ObjTransaction::classify({}, {}) - BEGIN : this = {}", fmt::ptr(std::addressof(pool)), mode, fmt::ptr(this));
         on_scope_exit{ [&]{
-            fmt::print("\nKLAIM: ObjTransaction::classify({}, {}) - END (SKIPPED) : this = {}", fmt::ptr(std::addressof(pool)), mode, fmt::ptr(this));
+            std::cerr << fmt::format("\nKLAIM: ObjTransaction::classify({}, {}) - END (SKIPPED) : this = {}", fmt::ptr(std::addressof(pool)), mode, fmt::ptr(this));
         }};
         assert_same_pool(pool, *this);
         auto out = ObjQueue{};
-        fmt::print("\nKLAIM: ObjTransaction::classify({}, {}) - calling transaction_classify now : this = {}", fmt::ptr(std::addressof(pool)), mode, fmt::ptr(this));
+        std::cerr << fmt::format("\nKLAIM: ObjTransaction::classify({}, {}) - calling transaction_classify now : this = {}", fmt::ptr(std::addressof(pool)), mode, fmt::ptr(this));
         ::transaction_classify(const_cast<::Transaction*>(raw()), mode, out.raw());
         return out;
     }
@@ -277,14 +309,14 @@ namespace solv
         TransactionMode mode
     ) const -> ObjQueue
     {
-        fmt::print("\nKLAIM: ObjTransaction::classify_pkgs(...) - BEGIN : this = {}", fmt::ptr(this));
+        std::cerr << fmt::format("\nKLAIM: ObjTransaction::classify_pkgs(...) - BEGIN : this = {}", fmt::ptr(this));
 
         on_scope_exit _{ [&] {
-            fmt::print("\nKLAIM: ObjTransaction::classify_pkgs(...) - END : this = {}", fmt::ptr(this));
+            std::cerr << fmt::format("\nKLAIM: ObjTransaction::classify_pkgs(...) - END : this = {}", fmt::ptr(this));
         } };
         assert_same_pool(pool, *this);
         auto out = ObjQueue{};
-        fmt::print("\nKLAIM: ObjTransaction::classify_pkgs(...) - calling transaction_classify_pkgs : this = {}", fmt::ptr(this));
+        std::cerr << fmt::format("\nKLAIM: ObjTransaction::classify_pkgs(...) - calling transaction_classify_pkgs : this = {}", fmt::ptr(this));
         ::transaction_classify_pkgs(const_cast<::Transaction*>(raw()), mode, type, from, to, out.raw());
         return out;
     }

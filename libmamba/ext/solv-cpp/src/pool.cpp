@@ -9,6 +9,7 @@
 #include <limits>
 #include <memory>
 #include <stdexcept>
+#include <iostream>
 
 #include <fmt/format.h>
 #include <fmt/ranges.h>
@@ -397,6 +398,24 @@ namespace solv
      *  Implementation of ObjPool  *
      *******************************/
 
+
+    namespace
+    {
+        void flush_all_standard_output()
+        {
+            std::cout.flush();
+            std::clog.flush();
+            std::cerr.flush();
+        }
+
+        void print_stacktrace()
+        {
+            flush_all_standard_output();
+            std::cerr << boost::stacktrace::stacktrace() << std::endl;
+            flush_all_standard_output();
+        }
+    }
+
     template <typename F>
     struct on_scope_exit
     {
@@ -415,13 +434,18 @@ namespace solv
             }
             catch (const std::exception& ex)
             {
-                fmt::print("############ \n Scope exit error - ABORTING : {}\n{}", ex.what(), boost::stacktrace::stacktrace());
+                std::cerr << fmt::format(
+                    "############ \n Scope exit error - ABORTING : {}\n",
+                    ex.what()
+                );
+                print_stacktrace();
                 __debugbreak();
                 std::abort();
             }
             catch (...)
             {
-                fmt::print("############ \n Scope exit unknown error - ABORTING :\n{}", boost::stacktrace::stacktrace());
+                std::cerr << "############ \n Scope exit unknown error - ABORTING :\n";
+                print_stacktrace();
                 __debugbreak();
                 std::abort();
             }
@@ -446,14 +470,14 @@ namespace solv
         , m_pool(::pool_create())
     {
         ObjPoolView::m_pool = m_pool.get();
-        fmt::print("\nKLAIM:  ObjPool::ObjPool() : this = {}, m_pool = {}", fmt::ptr(this), fmt::ptr(ObjPoolView::m_pool));
+        std::cerr << fmt::format("\nKLAIM:  ObjPool::ObjPool() : this = {}, m_pool = {}", fmt::ptr(this), fmt::ptr(ObjPoolView::m_pool));
     }
 
     ObjPool::~ObjPool() // = default;
     {
-        fmt::print("\nKLAIM:  ObjPool::~ObjPool() - BEGIN with explicit pool free : this = {}, m_pool = {}", fmt::ptr(this), fmt::ptr(m_pool.get()) );
+        std::cerr << fmt::format("\nKLAIM:  ObjPool::~ObjPool() - BEGIN with explicit pool free : this = {}, m_pool = {}", fmt::ptr(this), fmt::ptr(m_pool.get()) );
         on_scope_exit _{ [&]{
-            fmt::print("\nKLAIM:  ObjPool::~ObjPool() - END with explicit pool free : this = {} ", fmt::ptr(this) );
+            std::cerr << fmt::format("\nKLAIM:  ObjPool::~ObjPool() - END with explicit pool free : this = {} ", fmt::ptr(this) );
         } };
 
         m_pool.reset();
