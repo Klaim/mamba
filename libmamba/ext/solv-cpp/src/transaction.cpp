@@ -101,16 +101,31 @@ namespace solv
 
     void ObjTransaction::TransactionDeleter::operator()(::Transaction* ptr)
     {
-        std::cerr << fmt::format("\nKLAIM DEBUG: ObjTransaction::TransactionDeleter::operator()({}) - BEGIN", fmt::ptr(ptr) );
+        std::cerr << fmt::format("\nKLAIM DEBUG: ObjTransaction::TransactionDeleter::operator()({}) - BEGIN", fmt::ptr(ptr) ) << std::endl;
+        on_scope_exit _{ [&]{
+            std::cerr << fmt::format(
+                "\nKLAIM DEBUG: ObjTransaction::TransactionDeleter::operator()({}) - END",
+                fmt::ptr(ptr)
+            ) << std::endl;
+        }};
 
         ::transaction_free(ptr);
-        //std::memset(ptr, 0, sizeof(::Transaction));
-        //new ((void*) ptr) // makes sure we are writing there but it's not undefined behavior because we allocate
-        //    std::ptrdiff_t[sizeof(::Transaction)]{ 0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF };
-        const std::ptrdiff_t dead_memory[] = { 0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF };
-        std::memcpy(ptr, dead_memory, sizeof(::Transaction)); // might be UB?
+        if (ptr)
+        {
+            // std::memset(ptr, 0, sizeof(::Transaction));
+            // new ((void*) ptr) // makes sure we are writing there but it's not undefined behavior
+            // because we allocate
+            //     std::ptrdiff_t[sizeof(::Transaction)]{ 0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF,
+            //     0xDEADBEEF, 0xDEADBEEF };
+            const std::ptrdiff_t dead_memory[] = { 0xDEADBEEF,
+                                                   0xDEADBEEF,
+                                                   0xDEADBEEF,
+                                                   0xDEADBEEF,
+                                                   0xDEADBEEF };
+            std::memcpy(static_cast<void*>(ptr), dead_memory, sizeof(::Transaction));  // might be
+                                                                                       // UB?
+        }
 
-        std::cerr << fmt::format("\nKLAIM DEBUG: ObjTransaction::TransactionDeleter::operator()({}) - END", fmt::ptr(ptr) );
     }
 
     ObjTransaction::ObjTransaction(const ObjPool& pool)
@@ -126,13 +141,13 @@ namespace solv
 
     ObjTransaction::~ObjTransaction()
     {
-        std::cerr << fmt::format("\nKLAIM: ObjTransaction::~ObjTransaction() with explicit transaction reset - BEGIN : this = {}", fmt::ptr(this));
+        std::cerr << fmt::format("\nKLAIM: ObjTransaction::~ObjTransaction() with explicit transaction reset - BEGIN : this = {}", fmt::ptr(this))  << std::endl;
         on_scope_exit _{ [&]{
-            std::cerr << fmt::format("\nKLAIM: ObjTransaction::~ObjTransaction() with explicit transaction reset  - END : this = {}", fmt::ptr(this));
+            std::cerr << "\nKLAIM: ObjTransaction::~ObjTransaction() with explicit transaction reset - overwriting ObjTransaction's memory" << std::endl;
+            std::memset(static_cast<void*>(this), 0, sizeof(ObjTransaction));
+            std::cerr << "\nKLAIM: ObjTransaction::~ObjTransaction() with explicit transaction reset  - END" << std::endl;
         } };
         m_transaction.reset();
-        std::cerr << fmt::format("\nKLAIM: ObjTransaction::~ObjTransaction() with explicit transaction reset - overwriting ObjTransaction's memory : this = {}", fmt::ptr(this));
-        std::memset(this, 0, sizeof(ObjTransaction));
     }
 
     ObjTransaction::ObjTransaction(const ObjTransaction& other)

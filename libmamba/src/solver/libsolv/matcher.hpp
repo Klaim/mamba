@@ -42,6 +42,8 @@ namespace mamba::solver::libsolv
     public:
 
         explicit Matcher(specs::ChannelResolveParams channel_params);
+        ~Matcher();
+
 
         [[nodiscard]] auto channel_params() const -> const specs::ChannelResolveParams&;
 

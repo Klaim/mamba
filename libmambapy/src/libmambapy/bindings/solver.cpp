@@ -26,6 +26,7 @@ namespace mamba::solver
     // of comparison operators, so we tell it explicitly.
     auto operator==(const Solution::Action&, const Solution::Action&) -> bool = delete;
     auto operator!=(const Solution::Action&, const Solution::Action&) -> bool = delete;
+
 }
 
 PYBIND11_MAKE_OPAQUE(mamba::solver::Request::job_list);

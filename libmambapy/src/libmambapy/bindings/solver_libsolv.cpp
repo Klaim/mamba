@@ -4,6 +4,8 @@
 //
 // The full license is in the file LICENSE, distributed with this software.
 
+#include <iostream>
+
 #include <pybind11/functional.h>
 #include <pybind11/operators.h>
 #include <pybind11/pybind11.h>
@@ -13,6 +15,7 @@
 #include "mamba/solver/libsolv/repo_info.hpp"
 #include "mamba/solver/libsolv/solver.hpp"
 #include "mamba/solver/libsolv/unsolvable.hpp"
+#include "mamba/core/util_scope.hpp"
 
 #include "bind_utils.hpp"
 #include "bindings.hpp"
@@ -237,7 +240,14 @@ namespace mambapy
             .def(
                 "solve",
                 [](Solver& self, Database& db, const solver::Request& request)
-                { return self.solve(db, request); }
+                {
+                    std::cerr << "KLAIM: bindings Solver::solve() - BEGIN" << std::endl;
+                    mamba::on_scope_exit _{ []{
+                        std::cerr << "KLAIM: bindings Solver::solve() - END" << std::endl;
+                    }};
+
+                    return self.solve(db, request);
+                }
             )
             .def("add_jobs", solver_job_v2_migrator)
             .def("add_global_job", solver_job_v2_migrator)

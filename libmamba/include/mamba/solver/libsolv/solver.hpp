@@ -20,6 +20,8 @@ namespace mamba::solver::libsolv
     {
     public:
 
+        Solver();
+
         using Outcome = std::variant<Solution, UnSolvable>;
 
         [[nodiscard]] auto solve(Database& pool, Request&& request) -> expected_t<Outcome>;

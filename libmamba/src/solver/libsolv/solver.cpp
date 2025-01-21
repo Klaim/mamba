@@ -6,6 +6,8 @@
 
 #include <solv/solver.h>
 
+#include <iostream>
+
 #include "mamba/core/error_handling.hpp"
 #include "mamba/solver/libsolv/database.hpp"
 #include "mamba/solver/libsolv/solver.hpp"
@@ -48,6 +50,12 @@ namespace mamba::solver::libsolv
                 }
             );
         }
+    }
+
+
+    Solver::Solver()
+    {
+        std::cerr << "KLAIM: Solver::Solver()" << std::endl;
     }
 
     auto Solver::solve_impl(Database& mpool, const Request& request) -> expected_t<Outcome>
