@@ -460,10 +460,10 @@ namespace solv
 
     void ObjPool::PoolDeleter::operator()(::Pool* ptr)
     {
-        std::cerr << fmt::format("\nKLAIM: ObjPool::PoolDeleter({}) : BEGIN", fmt::ptr(ptr)) << std::endl;;
+        /*std::cerr << fmt::format("\nKLAIM: ObjPool::PoolDeleter({}) : BEGIN", fmt::ptr(ptr)) << std::endl;;
         on_scope_exit _{ [=] {
             std::cerr << fmt::format("\nKLAIM: ObjPool::PoolDeleter({}) : END", fmt::ptr(ptr)) << std::endl;;
-        } };
+        } };*/
         ::pool_free(ptr);
     }
 
@@ -474,28 +474,28 @@ namespace solv
         , m_pool(::pool_create())
     {
         ObjPoolView::m_pool = m_pool.get();
-        std::cerr << fmt::format("\nKLAIM:  ObjPool::ObjPool() : this = {}, m_pool = {}", fmt::ptr(this), fmt::ptr(ObjPoolView::m_pool));
-        /*std::cerr << fmt::format("\nKLAIM: ");
-        print_stacktrace();*/
-        std::cerr << fmt::format("\nKLAIM:  ObjPool::ObjPool() : reading pointed value at m_pool ({})",fmt::ptr(ObjPoolView::m_pool)) << std::endl;
-        std::cerr << fmt::format("    (uint64_t)*m_pool = {}", *reinterpret_cast<std::uint64_t*>(ObjPoolView::m_pool)) << std::endl;
+        //std::cerr << fmt::format("\nKLAIM:  ObjPool::ObjPool() : this = {}, m_pool = {}", fmt::ptr(this), fmt::ptr(ObjPoolView::m_pool));
+        ///*std::cerr << fmt::format("\nKLAIM: ");
+        //print_stacktrace();*/
+        //std::cerr << fmt::format("\nKLAIM:  ObjPool::ObjPool() : reading pointed value at m_pool ({})",fmt::ptr(ObjPoolView::m_pool)) << std::endl;
+        //std::cerr << fmt::format("    (uint64_t)*m_pool = {}", *reinterpret_cast<std::uint64_t*>(ObjPoolView::m_pool)) << std::endl;
 
     }
 
     ObjPool::~ObjPool() // = default;
     {
-        std::cerr << "KLAIM: ObjPool::~ObjPool() - BEGIN" << std::endl;
+        /*std::cerr << "KLAIM: ObjPool::~ObjPool() - BEGIN" << std::endl;
         on_scope_exit _{ [] {
             std::cerr << "KLAIM: ObjPool::~ObjPool() - END" << std::endl;
-        } };
+        } };*/
         if (ObjPool::m_pool)
         {
-            std::cerr << fmt::format("\nKLAIM:  ObjPool::~ObjPool() - BEGIN explicit pool free : this = {}", fmt::ptr(this)) << std::endl;
+            /*std::cerr << fmt::format("\nKLAIM:  ObjPool::~ObjPool() - BEGIN explicit pool free : this = {}", fmt::ptr(this)) << std::endl;
             std::cerr << fmt::format("\nKLAIM:  ObjPool::~ObjPool() -     ObjPool::m_pool.get() == {}", fmt::ptr(ObjPool::m_pool.get())) << std::endl;
 
             on_scope_exit _{ [&] {
                 std::cerr << fmt::format("\nKLAIM:  ObjPool::~ObjPool() - END explicit pool free : this = {} ",fmt::ptr(this)) << std::endl;
-            }};
+            }};*/
 
             ObjPool::m_pool.reset();
         }

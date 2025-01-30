@@ -43,28 +43,28 @@ namespace mamba::solver::libsolv
     Database::Database(specs::ChannelResolveParams channel_params)
         : m_data(std::make_unique<DatabaseImpl>(std::move(channel_params)))
     {
-        std::cerr << "KLAIM: Database::Database() - BEGIN" << std::endl;
+        /*std::cerr << "KLAIM: Database::Database() - BEGIN" << std::endl;
         on_scope_exit _{ []{
             std::cerr << "KLAIM: Database::Database() - END" << std::endl;
-        }};
+        }};*/
         pool().set_disttype(DISTTYPE_CONDA);
         // Ensure that debug logging never goes to stdout as to not interfere json output
-        std::cerr << "KLAIM: Database::Database() : accessing pool().raw()  ..." << std::endl;
+        //std::cerr << "KLAIM: Database::Database() : accessing pool().raw()  ..." << std::endl;
         pool().raw()->debugmask |= SOLV_DEBUG_TO_STDERR;
-        std::cerr << "KLAIM: Database::Database() : accessing pool().raw() - OK" << std::endl;
+        //std::cerr << "KLAIM: Database::Database() : accessing pool().raw() - OK" << std::endl;
         ::pool_setdebuglevel(pool().raw(), -1);  // Off
         pool().set_namespace_callback(
             [&data = (*m_data
              )](solv::ObjPoolView pool, solv::StringId first, solv::StringId second) -> solv::OffsetId
             {
-                std::cerr << "KLAIM: Database::Database()::pool namespace callback() - BEGIN " << std::endl;
+                /*std::cerr << "KLAIM: Database::Database()::pool namespace callback() - BEGIN " << std::endl;
                 std::cerr << fmt::format(
                     "KLAIM: Database::Database()::pool namespace callback() - pool->raw = {}",
                     fmt::ptr(pool.raw())
                 ) << std::endl;
                 on_scope_exit _{ []{
                     std::cerr << "KLAIM: Database::Database()::pool namespace callback() - END" << std::endl;
-                }};
+                }};*/
                 auto [dep, flags] = get_abused_namespace_callback_args(pool, first, second);
                 return data.matcher.get_matching_packages(pool, dep, flags);
             }

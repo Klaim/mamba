@@ -46,12 +46,12 @@ namespace mamba::solver::libsolv
     Matcher::Matcher(specs::ChannelResolveParams channel_params)
         : m_channel_params(std::move(channel_params))
     {
-        std::cerr << "KLAIM: Matcher::Matcher()" << std::endl;
+        //std::cerr << "KLAIM: Matcher::Matcher()" << std::endl;
     }
 
     Matcher::~Matcher()
     {
-        std::cerr << "KLAIM: Matcher::~Matcher()" << std::endl;
+        //std::cerr << "KLAIM: Matcher::~Matcher()" << std::endl;
     }
 
     auto Matcher::channel_params() const -> const specs::ChannelResolveParams&

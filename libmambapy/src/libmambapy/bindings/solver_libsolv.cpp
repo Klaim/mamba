@@ -241,10 +241,10 @@ namespace mambapy
                 "solve",
                 [](Solver& self, Database& db, const solver::Request& request)
                 {
-                    std::cerr << "KLAIM: bindings Solver::solve() - BEGIN" << std::endl;
+                    /*std::cerr << "KLAIM: bindings Solver::solve() - BEGIN" << std::endl;
                     mamba::on_scope_exit _{ []{
                         std::cerr << "KLAIM: bindings Solver::solve() - END" << std::endl;
-                    }};
+                    }};*/
 
                     return self.solve(db, request);
                 }
