@@ -105,4 +105,9 @@ namespace mamba::solver::libsolv
         return solve_impl(mpool, request);
     }
 
+    void free_all_deferred_transactions_workaround()
+    {
+        solv::free_all_deferred_transactions();
+    }
+
 }  // namespace mamba

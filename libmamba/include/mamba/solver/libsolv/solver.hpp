@@ -29,5 +29,7 @@ namespace mamba::solver::libsolv
 
         auto solve_impl(Database& pool, const Request& request) -> expected_t<Outcome>;
     };
+
+    void free_all_deferred_transactions_workaround();
 }
 #endif

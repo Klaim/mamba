@@ -5,6 +5,8 @@
 // The full license is in the file LICENSE, distributed with this software.
 
 #include <cassert>
+#include <mutex>
+#include <vector>
 
 #include <solv/solver.h>
 #include <solv/transaction.h>
@@ -15,9 +17,43 @@
 
 namespace solv
 {
+
+    static std::vector<::Transaction*> transactions_to_free;
+    static std::mutex transactions_free_mutex;
+
+    void defer_free(::Transaction* transaction)
+    {
+        std::scoped_lock _{ transactions_free_mutex };
+        transactions_to_free.push_back(transaction);
+    }
+
+    void free_all_deferred_transactions()
+    {
+        std::scoped_lock _{ transactions_free_mutex };
+        for (::Transaction* ptr : transactions_to_free)
+        {
+            ::transaction_free(ptr);
+        }
+        transactions_to_free.clear();
+    }
+
+    namespace
+    {
+        struct FreeDeferredTransactions
+        {
+            ~FreeDeferredTransactions()
+            {
+                free_all_deferred_transactions();
+            }
+        } free_on_program_end;
+    }
+
+
+
     void ObjTransaction::TransactionDeleter::operator()(::Transaction* ptr)
     {
-        ::transaction_free(ptr);
+        // ::transaction_free(ptr); // WORKAROUND: libsolv randomly attempts to access transaction objects after this point
+        defer_free(ptr);
     }
 
     ObjTransaction::ObjTransaction(const ObjPool& pool)

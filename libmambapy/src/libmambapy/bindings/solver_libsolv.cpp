@@ -27,6 +27,8 @@ namespace mambapy
         using namespace mamba;
         using namespace mamba::solver::libsolv;
 
+        m.def("free_all_deferred_transactions_workaround", &free_all_deferred_transactions_workaround);
+
         py::enum_<RepodataParser>(m, "RepodataParser")
             .value("Mamba", RepodataParser::Mamba)
             .value("Libsolv", RepodataParser::Libsolv)

@@ -18,6 +18,7 @@
 #include <solv/selection.h>
 
 #include "solv-cpp/pool.hpp"
+#include "solv-cpp/transaction.hpp"
 
 namespace solv
 {
@@ -387,7 +388,11 @@ namespace solv
         ObjPoolView::m_pool = m_pool.get();
     }
 
-    ObjPool::~ObjPool() = default;
+    ObjPool::~ObjPool()
+    {
+        m_pool.reset();
+        free_all_deferred_transactions();
+    }
 
     void ObjPool::set_namespace_callback(UserCallback&& callback)
     {
