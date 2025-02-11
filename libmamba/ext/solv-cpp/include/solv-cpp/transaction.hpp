@@ -198,6 +198,8 @@ namespace solv
             }
         }
     }
+
+    void free_all_deferred_transactions();
 }
 
 #endif

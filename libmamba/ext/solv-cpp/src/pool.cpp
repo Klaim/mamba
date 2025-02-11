@@ -23,6 +23,7 @@
 #include <solv/selection.h>
 
 #include "solv-cpp/pool.hpp"
+#include "solv-cpp/transaction.hpp"
 
 template <>
 struct fmt::formatter<boost::stacktrace::frame> : formatter<std::string_view>
@@ -488,6 +489,7 @@ namespace solv
         on_scope_exit _{ [] {
             std::cerr << "KLAIM: ObjPool::~ObjPool() - END" << std::endl;
         } };*/
+        free_all_deferred_transactions();
         if (ObjPool::m_pool)
         {
             /*std::cerr << fmt::format("\nKLAIM:  ObjPool::~ObjPool() - BEGIN explicit pool free : this = {}", fmt::ptr(this)) << std::endl;
@@ -499,6 +501,7 @@ namespace solv
 
             ObjPool::m_pool.reset();
         }
+        free_all_deferred_transactions();
     }
 
     void ObjPool::set_namespace_callback(UserCallback&& callback)

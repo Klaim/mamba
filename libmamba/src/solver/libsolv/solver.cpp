@@ -9,6 +9,7 @@
 #include <iostream>
 
 #include "mamba/core/error_handling.hpp"
+#include "mamba/core/util_scope.hpp"
 #include "mamba/solver/libsolv/database.hpp"
 #include "mamba/solver/libsolv/solver.hpp"
 #include "mamba/util/variant_cmp.hpp"
