@@ -27,7 +27,6 @@
 
 namespace mamba
 {
-
     class Logger : public spdlog::logger
     {
     public:

@@ -9,16 +9,6 @@
 
 namespace mamba
 {
-    enum class log_level
-    {
-        trace,
-        debug,
-        info,
-        warn,
-        err,
-        critical,
-        off
-    };
 }
 
 #endif
