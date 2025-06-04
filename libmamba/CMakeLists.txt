@@ -454,11 +454,11 @@ macro(libmamba_create_target target_name linkage output_name)
     # Header only libraries are always linked the same way
     target_link_libraries(${target_name} PUBLIC tl::expected nlohmann_json::nlohmann_json)
 
-    target_compile_features(${target_name} PUBLIC cxx_std_20)
+    target_compile_features(${target_name} PUBLIC cxx_std_23)
     set_target_properties(
         ${target_name}
         PROPERTIES
-            CXX_STANDARD 20
+            CXX_STANDARD 23
             CXX_STANDARD_REQUIRED YES
             CXX_EXTENSIONS NO
     )

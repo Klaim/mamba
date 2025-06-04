@@ -50,11 +50,11 @@ target_include_directories(bindings PRIVATE src/libmambapy/bindings)
 mamba_target_add_compile_warnings(bindings WARNING_AS_ERROR ${MAMBA_WARNING_AS_ERROR})
 
 target_link_libraries(bindings PRIVATE pybind11::pybind11 ${libmamba_target})
-target_compile_features(bindings PUBLIC cxx_std_20)
+target_compile_features(bindings PUBLIC cxx_std_23)
 set_target_properties(
     bindings
     PROPERTIES
-        CXX_STANDARD 20
+        CXX_STANDARD 23
         CXX_STANDARD_REQUIRED YES
         CXX_EXTENSIONS NO
 )

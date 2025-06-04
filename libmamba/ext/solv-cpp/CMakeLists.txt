@@ -35,11 +35,11 @@ else()
 endif()
 
 target_link_libraries(solv-cpp PUBLIC tl::expected ${LIBSOLV_DEPS})
-target_compile_features(solv-cpp PUBLIC cxx_std_20)
+target_compile_features(solv-cpp PUBLIC cxx_std_23)
 set_target_properties(
     solv-cpp
     PROPERTIES
-        CXX_STANDARD 20
+        CXX_STANDARD 23
         CXX_STANDARD_REQUIRED YES
         CXX_EXTENSIONS NO
 )
