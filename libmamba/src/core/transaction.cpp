@@ -865,7 +865,7 @@ namespace mamba
 
         auto add_json = [](const auto& jlist, const char* s)
         {
-            if (!jlist.empty())
+            //if (!jlist.empty())
             {
                 auto json_location = nlohmann::json::json_pointer{ fmt::format("/actions/{}", s) };
                 Console::instance().set_json_output({ .to_assign{ { json_location, jlist } } });
