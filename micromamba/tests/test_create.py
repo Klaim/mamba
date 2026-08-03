@@ -2424,7 +2424,7 @@ def test_create_from_mirror_with_prefix(tmp_home, tmp_root_prefix, tmp_path):
 
     assert any(
         package["name"] == "cpp-tabulate"
-        and package["channel"].startsWith("https://repo.prefix.dev/emscripten-forge-dev")
+        and package["channel"].startswith("https://repo.prefix.dev/emscripten-forge-dev")
         and package["subdir"] == "emscripten-wasm32"
         for package in res["actions"]["LINK"]
     )
