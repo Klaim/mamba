@@ -859,7 +859,7 @@ namespace mamba
 
         auto add_json = [](const auto& jlist, const char* s)
         {
-            //if (!jlist.empty())
+            if (!jlist.empty()) // NOTE: this makes sure fields are only added if they exist. If we intend to have "actions : {}" as valid, delete this line
             {
                 auto json_location = nlohmann::json::json_pointer{ fmt::format("/actions/{}", s) };
                 Console::instance().set_json_output({ .to_assign{ { json_location, jlist } } });
@@ -1613,16 +1613,20 @@ namespace mamba
         );
         conda_package_set.clear();
 
-        for (auto& package : conda_packages_vec)
+        if (lockfile_data.get_metadata().enable_channels)  // FIXME: this should not be necessary,
+                                                           // but here we are
         {
-            if (package.package_url.empty() and not package.channel.empty())
+            for (auto& package : conda_packages_vec)
             {
-                using Credentials = typename specs::CondaURL::Credentials;
-                auto channels = channel_context.make_channel(package.channel);
-                assert(channels.size() == 1);  // A URL can only resolve to one channel
-                const auto& channel = channels.front();
+                if (package.package_url.empty() and not package.channel.empty())
+                {
+                    using Credentials = typename specs::CondaURL::Credentials;
+                    auto channels = channel_context.make_channel(package.channel);
+                    assert(channels.size() == 1);  // A URL can only resolve to one channel
+                    const auto& channel = channels.front();
 
-                package.package_url = package.url_for_channel(channel.url().str(Credentials::Show));
+                    package.package_url = package.url_for_channel(channel.url().str(Credentials::Show));
+                }
             }
         }
 
