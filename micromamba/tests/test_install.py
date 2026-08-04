@@ -612,7 +612,7 @@ class TestInstall:
         assert "xtensor" in {pkg["name"] for pkg in res["actions"]["LINK"]}
 
         reinstall_res = helpers.install("xtensor", "--json")
-        assert not reinstall_res.has_key("actions") or not reinstall_res["action"] or (member.is_empty() for member in reinstall_res["action"])
+        assert (not reinstall_res.get("actions")) or (not reinstall_res["action"]) or (not member for member in reinstall_res["action"])
 
     def test_install_local_package_relative_path(self):
         """Attempts to install a locally built package from a relative local path."""
