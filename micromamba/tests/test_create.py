@@ -194,8 +194,7 @@ def test_specs(tmp_home, tmp_root_prefix, tmp_path, source, file_type, create_cm
     json_res = helpers.create(*cmd, "--json", create_cmd=create_cmd)
     assert json_res["success"]
 
-def check_channels_from_lockfile(json_packages, lockfile_format, excluded_packages=[]):
-    expected_valid_channels = ["conda-forge"]
+def check_channels_from_lockfile(json_packages, lockfile_format, expected_valid_channels = ["conda-forge"]):
     expected_valid_channels_urls = []
 
     # TODO: handle other formats once they support channels from lockfiles
@@ -271,7 +270,7 @@ def test_lockfile_with_pip(tmp_home, tmp_root_prefix, tmp_path, lockfile_format)
     # Test pkg url ending with `.tar.bz2`
     assert any(package["name"] == "xz" and package["version"] == "5.2.6" for package in packages)
 
-    check_channels_from_lockfile(packages, lockfile_format, ["pypi"])
+    check_channels_from_lockfile(packages, lockfile_format, ["conda-forge", "pypi"])
 
 
 # TODO: Remove this test once this is fixed:
