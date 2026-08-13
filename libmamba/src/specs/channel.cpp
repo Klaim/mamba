@@ -104,12 +104,6 @@ namespace mamba::specs
 
         prepare_mirrors(all_urls);
         m_mirror_urls = std::move(all_urls);
-
-        LOG_DEBUG << "\nALL MIRRORS FOR " << this->id();
-        for (const auto& url : m_mirror_urls)
-        {
-            LOG_DEBUG << "  " << url.str();
-        }
     }
 
     auto Channel::mirror_urls() const -> const std::vector<CondaURL>&

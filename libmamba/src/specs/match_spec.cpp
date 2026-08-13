@@ -355,11 +355,8 @@ namespace mamba::specs
             if (util::starts_with(key_val, "version"))
             {
                 const auto op_val = util::lstrip(key_val, "version");
-                if (                                                                       //
-                    util::starts_with(op_val, "==")                                        //
-                    || util::starts_with(op_val, "!=") || util::starts_with(op_val, "~=")  //
-                    || util::starts_with(op_val, '>')                                      //
-                    || util::starts_with(op_val, '<')
+                static constexpr std::array operator_strs = { "==", "!=", "~=", ">", "<" };
+                if (util::starts_with_any(op_val, operator_strs)
                 )
                 {
                     return make_unexpected_parse(

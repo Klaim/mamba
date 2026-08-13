@@ -37,11 +37,11 @@ namespace mamba::download
 
     namespace
     {
-        template <class It>
-        bool contains(It first, It last, MirrorID id)
+        template <std::ranges::input_range R>
+        bool contains_mirror_with_id(const R& r, const MirrorID& id)
         {
-            return std::find_if(first, last, [id](const auto& mirror) { return id == mirror->id(); })
-                   != last;
+            return std::ranges::any_of(r, [&](const auto& mirror) {
+                return mirror->id() == id; });
         }
     }
 
@@ -51,7 +51,7 @@ namespace mamba::download
         specs::Channel::UrlPriority priority
     )
     {
-        auto insert_mirror = [&](auto& mirror_list)  // assuming std::vector here
+        auto insert_mirror = [&](mirror_set& mirror_list)
         {
             auto insert_it = priority == specs::Channel::UrlPriority::high ? mirror_list.begin()
                                                                            : mirror_list.end();
@@ -62,7 +62,7 @@ namespace mamba::download
         if (find_it != m_mirrors.end())
         {
             auto& mirrors = find_it->second;
-            if (contains(mirrors.begin(), mirrors.end(), mirror->id()))
+            if (contains_mirror_with_id(mirrors, mirror->id()))
             {
                 return false;
             }
