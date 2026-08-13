@@ -253,26 +253,31 @@ namespace mamba::specs
         auto operator""_cu(const char* str, std::size_t len) -> CondaURL;
     }
 
+    // TODO: use C++26's concept parameter to reduce these concepts definitions (see url.hpp)
+
+    template<typename T>
+    concept CondaURLLike = std::semiregular<T> and std::convertible_to<T, CondaURL>;
+
+    template <typename T>
+    concept CondaURLRange = std::ranges::input_range<T> and CondaURLLike<std::ranges::range_value_t<T>>;
+
     /** Converts any range of `URL` into a view-range of `CondaURL` values. */
-    template <std::ranges::input_range URLRange>
-        requires std::same_as<std::ranges::range_value_t<URLRange>, util::URL>
-    auto as_conda_urls(URLRange&& values)
+    template <util::URLRange R>
+    CondaURLRange auto as_conda_urls(R&& values)
     {
         return std::views::transform(
-            std::forward<URLRange>(values),
+            std::forward<R>(values),
             [](const util::URL& url) { return CondaURL{ url }; }
         );
     }
 
     /** Converts any range of string-like values into a view-range of `CondaURL` values based on
      * it's constructor. */
-    template <std::ranges::input_range StringRange>
-        requires(
-            not std::same_as<std::ranges::range_value_t<StringRange>, util::URL>
-        )  // TODO: or only string-like types?
-    auto as_conda_urls(StringRange&& values)
+    template <util::StringRange R>
+        requires(not util::URLRange<R>)
+    CondaURLRange auto as_conda_urls(R&& values)
     {
-        return as_conda_urls(util::as_urls(std::forward<StringRange>(values)));
+        return as_conda_urls(util::as_urls(std::forward<R>(values)));
     }
 
 }

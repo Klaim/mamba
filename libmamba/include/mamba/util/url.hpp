@@ -8,6 +8,7 @@
 #define MAMBA_UTIL_URL_HPP
 
 #include <array>
+#include <concepts>
 #include <functional>
 #include <ranges>
 #include <string>
@@ -295,12 +296,36 @@ namespace mamba::util
     auto operator/(URL const& url, std::string_view subpath) -> URL;
     auto operator/(URL&& url, std::string_view subpath) -> URL;
 
+    template <typename T>
+    concept StringLike = std::semiregular<T>
+        and (std::convertible_to<T, std::string_view> or std::convertible_to<T, std::string>);
+
+    template <typename T>
+    concept URLLike = std::semiregular<T> and std::convertible_to<T, URL>;
+
+    // clang-format off
+    // TODO: use C++26's concept parameter to replace following concepts by:
+    //           template<typename T, template<typename> concept X>
+    //           concept range_of_concept = std::ranges::input_range<T> // or std::ranges::range
+    //                                and X<std::ranges::range_value_t<T>>;
+    //           using StringRange = range_of_concept<StringLike>;
+    //           using URLRange = range_of_concept<URLLike>;
+    // clang-format on
+
+    /** Matches any range of string-like elements. */
+    template <typename T>
+    concept StringRange = std::ranges::input_range<T> and StringLike<std::ranges::range_value_t<T>>;
+
+    /** Matches any range of URL-like elements. */
+    template <typename T>
+    concept URLRange = std::ranges::input_range<T> and URLLike<std::ranges::range_value_t<T>>;
+
     /** Converts any range of string-like values into a view-range of `URL` values. */
-    template <std::ranges::input_range StringRange>
-    auto as_urls(StringRange&& values)
+    template <StringRange R>
+    URLRange auto as_urls(R&& values)
     {
         return std::views::transform(
-            std::forward<StringRange>(values),
+            std::forward<R>(values),
             [](const auto& url) { return *URL::parse(url); }
         );
     }
