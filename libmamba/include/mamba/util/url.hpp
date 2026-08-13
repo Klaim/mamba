@@ -298,7 +298,7 @@ namespace mamba::util
 
     template <typename T>
     concept StringLike = std::semiregular<T>
-        and (std::convertible_to<T, std::string_view> or std::convertible_to<T, std::string>);
+                         and (std::convertible_to<T, std::string_view> or std::convertible_to<T, std::string>);
 
     template <typename T>
     concept URLLike = std::semiregular<T> and std::convertible_to<T, URL>;

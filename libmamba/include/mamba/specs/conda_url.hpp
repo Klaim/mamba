@@ -255,11 +255,12 @@ namespace mamba::specs
 
     // TODO: use C++26's concept parameter to reduce these concepts definitions (see url.hpp)
 
-    template<typename T>
+    template <typename T>
     concept CondaURLLike = std::semiregular<T> and std::convertible_to<T, CondaURL>;
 
     template <typename T>
-    concept CondaURLRange = std::ranges::input_range<T> and CondaURLLike<std::ranges::range_value_t<T>>;
+    concept CondaURLRange = std::ranges::input_range<T>
+                            and CondaURLLike<std::ranges::range_value_t<T>>;
 
     /** Converts any range of `URL` into a view-range of `CondaURL` values. */
     template <util::URLRange R>

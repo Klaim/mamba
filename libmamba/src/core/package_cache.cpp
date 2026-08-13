@@ -434,7 +434,7 @@ namespace mamba
                         // for explicit env, we have no size, nor sha256 so we need to
                         // set valid true here
                         valid = true;
-                        
+
                         const auto repodata_url = repodata_record["url"].get<std::string>();
                         if (!repodata_url.empty())
                         {

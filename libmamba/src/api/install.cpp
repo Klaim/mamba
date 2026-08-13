@@ -1213,11 +1213,7 @@ namespace mamba
             if (not match_specs)
             {
                 throw mamba_error(
-                    fmt::format(
-                        "failed to parse specs '{}' : {}",
-                        ms,
-                        match_specs.error().what()
-                    ),
+                    fmt::format("failed to parse specs '{}' : {}", ms, match_specs.error().what()),
                     mamba_error_code::invalid_spec
                 );
             }

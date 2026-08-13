@@ -40,8 +40,7 @@ namespace mamba::download
         template <std::ranges::input_range R>
         bool contains_mirror_with_id(const R& r, const MirrorID& id)
         {
-            return std::ranges::any_of(r, [&](const auto& mirror) {
-                return mirror->id() == id; });
+            return std::ranges::any_of(r, [&](const auto& mirror) { return mirror->id() == id; });
         }
     }
 

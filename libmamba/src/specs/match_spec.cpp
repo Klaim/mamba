@@ -356,8 +356,7 @@ namespace mamba::specs
             {
                 const auto op_val = util::lstrip(key_val, "version");
                 static constexpr std::array operator_strs = { "==", "!=", "~=", ">", "<" };
-                if (util::starts_with_any(op_val, operator_strs)
-                )
+                if (util::starts_with_any(op_val, operator_strs))
                 {
                     return make_unexpected_parse(
                         fmt::format(
