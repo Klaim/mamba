@@ -194,6 +194,26 @@ def test_specs(tmp_home, tmp_root_prefix, tmp_path, source, file_type, create_cm
     json_res = helpers.create(*cmd, "--json", create_cmd=create_cmd)
     assert json_res["success"]
 
+def check_channels_from_lockfile(json_packages, lockfile_format):
+    expected_valid_channels = ["conda-forge"]
+    expected_valid_channels_urls = []
+
+    # TODO: handle other formats once they support channels from lockfiles
+    if lockfile_format == lockfile_format_mambajs:
+        expected_valid_channels_urls = [
+            "https://prefix.dev/conda-forge",
+            "https://repo.prefix.dev/conda-forge",
+            "https://prefix.dev/emscripten-forge-dev",
+            "https://repo.prefix.dev/emscripten-forge-dev",
+        ]
+
+    for package in json_packages:
+        channel = package["channel"]
+        assert channel in expected_valid_channels or channel in expected_valid_channels_urls, f"unexpected package '{package['name']}'s channel name : {channel} (expected channels: {expected_valid_channels} or {expected_valid_channels_urls})\npackages: {json.dumps(json_packages, indent=2)}"
+        if expected_valid_channels_urls:
+            url = package["url"]
+            assert any(url.startswith(channel_url) for channel_url in expected_valid_channels_urls), f"package '{package['name']}'s url not starting with expected channel url : {url} (expected channel urls: {expected_valid_channels_urls})\npackages: {json.dumps(json_packages, indent=2)}"
+
 
 @pytest.mark.parametrize("shared_pkgs_dirs", [True], indirect=True)
 @pytest.mark.parametrize("lockfile_format", [lockfile_format_condalock, lockfile_format_mambajs])
@@ -201,19 +221,18 @@ def test_lockfile(tmp_home, tmp_root_prefix, tmp_path, lockfile_format):
     env_prefix = tmp_path / "myenv"
 
     lockfile_to_use = lockfile_path(lockfile_format)
-    print("lockfile_to_use = ", lockfile_to_use)
 
     spec_file = tmp_path / lockfile_name("env-lock", lockfile_format)
 
     shutil.copyfile(lockfile_to_use, spec_file)
 
     res = helpers.create("-p", env_prefix, "-f", spec_file, "--json", default_channel=False)
-    print("create result:\n", res)
-    assert res["success"]
+    assert res["success"], f"output: \n{json.dumps(res, indent=2)}"
 
     packages = helpers.umamba_list("-p", env_prefix, "--json")
-    print("packages installed:\n", packages)
     assert any(package["name"] == "zlib" and package["version"] == "1.2.11" for package in packages)
+
+    check_channels_from_lockfile(packages, lockfile_format)
 
 
 @pytest.mark.skipif(
@@ -247,6 +266,8 @@ def test_lockfile_with_pip(tmp_home, tmp_root_prefix, tmp_path, lockfile_format)
     assert any(package["name"] == "bzip2" and package["version"] == "1.0.8" for package in packages)
     # Test pkg url ending with `.tar.bz2`
     assert any(package["name"] == "xz" and package["version"] == "5.2.6" for package in packages)
+
+    check_channels_from_lockfile(packages, lockfile_format)
 
 
 # TODO: Remove this test once this is fixed:
