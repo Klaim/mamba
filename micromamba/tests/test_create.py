@@ -201,6 +201,7 @@ def check_channels_from_lockfile(json_packages, lockfile_format):
     # TODO: handle other formats once they support channels from lockfiles
     if lockfile_format == lockfile_format_mambajs:
         expected_valid_channels_urls = [
+            # NOTE: these urls must be in sync with the json lockfiles in ./env_lockfiles/
             "https://prefix.dev/conda-forge",
             "https://repo.prefix.dev/conda-forge",
             "https://prefix.dev/emscripten-forge-dev",
