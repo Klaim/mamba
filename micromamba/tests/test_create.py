@@ -209,8 +209,6 @@ def check_channels_from_lockfile(json_packages, lockfile_format, expected_valid_
 
     for package in json_packages:
         name = package['name']
-        if name in excluded_packages:
-            return
         channel = package["channel"]
         assert channel in expected_valid_channels or channel in expected_valid_channels_urls, f"unexpected package '{name}'s channel name : {channel} (expected channels: {expected_valid_channels} or {expected_valid_channels_urls})\npackages: {json.dumps(json_packages, indent=2)}"
         if expected_valid_channels_urls:
