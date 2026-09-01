@@ -643,7 +643,7 @@ namespace mamba
                                             { return pkg_cache_data.path(); })
             );
             LOG_ERROR << message;
-            throw std::runtime_error(message);
+            throw mamba_error{ message, mamba_error_code::internal_failure };
         }
     }
 
@@ -688,7 +688,7 @@ namespace mamba
                                             { return pkg_cache_data.path(); })
             );
             LOG_ERROR << message;
-            throw std::runtime_error(message);
+            throw mamba_error{ message, mamba_error_code::internal_failure };
         }
     }
 
