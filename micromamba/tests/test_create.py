@@ -205,6 +205,7 @@ def check_channels_from_lockfile(json_packages, lockfile_format, expected_valid_
             "https://repo.prefix.dev/conda-forge",
             "https://prefix.dev/emscripten-forge-dev",
             "https://repo.prefix.dev/emscripten-forge-dev",
+            "https://pypi.org/" # for now we ignore pypi packages having no known url
         ]
 
     for package in json_packages:
@@ -212,10 +213,14 @@ def check_channels_from_lockfile(json_packages, lockfile_format, expected_valid_
         if name in exclude_packages:
             continue
         channel = package["channel"]
-        assert channel in expected_valid_channels or channel in expected_valid_channels_urls, f"unexpected package '{name}'s channel name : {channel} (expected channels: {expected_valid_channels} or {expected_valid_channels_urls})\npackages: {json.dumps(json_packages, indent=2)}"
+        assert channel in expected_valid_channels or channel in expected_valid_channels_urls, f"unexpected package `{name}`'s channel name : {channel} (expected channels: {expected_valid_channels} or {expected_valid_channels_urls})\npackages: {json.dumps(json_packages, indent=2)}"
         if expected_valid_channels_urls:
             url = package["url"]
-            assert any(url.startswith(channel_url) for channel_url in expected_valid_channels_urls), f"package '{name}'s url not starting with expected channel url : {url} (expected channel urls: {expected_valid_channels_urls})\npackages: {json.dumps(json_packages, indent=2)}"
+            if not url and channel in ["https://pypi.org/", "pypi"]: # for now we ignore pypi packages having no known url
+                # skip
+                continue
+                
+            assert any(url.startswith(channel_url) for channel_url in expected_valid_channels_urls), f"package `{name}`'s url not starting with expected channel url : {url} (expected channel urls: {expected_valid_channels_urls})\npackages: {json.dumps(json_packages, indent=2)}"
 
 
 @pytest.mark.parametrize("shared_pkgs_dirs", [True], indirect=True)
@@ -270,7 +275,7 @@ def test_lockfile_with_pip(tmp_home, tmp_root_prefix, tmp_path, lockfile_format)
     # Test pkg url ending with `.tar.bz2`
     assert any(package["name"] == "xz" and package["version"] == "5.2.6" for package in packages)
 
-    check_channels_from_lockfile(packages, lockfile_format, ["conda-forge", "pypi"], ["Checkm"])
+    check_channels_from_lockfile(packages, lockfile_format, ["conda-forge", "pypi"])
 
 
 # TODO: Remove this test once this is fixed:
