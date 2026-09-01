@@ -3,6 +3,7 @@ import os
 import platform
 import shutil
 import subprocess
+import sys
 from pathlib import Path, PureWindowsPath
 
 import pytest
@@ -19,6 +20,59 @@ def skip_if_shell_incompat(shell_type):
         or (plat_system == "Darwin" and shell_type not in ("zsh", "bash", "posix", "dash"))
     ):
         pytest.skip("Incompatible shell/OS")
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
+@pytest.mark.parametrize(
+    ("shell", "expect_prefix_dirs", "expect_hook_stderr"),
+    [
+        ("cmd.exe", True, True),
+        ("powershell", False, False),
+    ],
+)
+def test_hook_shell(
+    tmp_home, tmp_root_prefix, tmp_path, shell, expect_prefix_dirs, expect_hook_stderr
+):
+    res = helpers.shell("hook", "-s", shell)
+
+    if shell == "cmd.exe":
+        assert res == ""
+        assert (tmp_root_prefix / "condabin" / "mamba_hook.bat").is_file()
+        assert (tmp_root_prefix / "Scripts" / "activate.bat").is_file()
+        assert (tmp_root_prefix / "conda-meta").is_dir()
+    elif shell == "powershell":
+        assert res, "shell hook output was empty"
+        assert not (tmp_root_prefix / "condabin").is_dir()
+        assert not (tmp_root_prefix / "Scripts").is_dir()
+        assert not (tmp_root_prefix / "conda-meta").is_dir()
+
+    # Remove any preconfigured settings
+    data = tmp_path / "data"
+    env = {k: v for k, v in os.environ.items() if not k.startswith(("MAMBA_", "XDG_", "CONDA_"))}
+    env["XDG_DATA_HOME"] = str(data)
+    env["XDG_CONFIG_HOME"] = str(tmp_path / "config")
+    default_prefix = data / "mamba"
+
+    mamba_exe = helpers.get_umamba()
+
+    res = subprocess.run([mamba_exe], env=env, capture_output=True, text=True)
+    assert res.returncode == 0
+    assert not res.stderr, f"mamba exe stderr was not empty: {res.stderr}"
+
+    hook = subprocess.run(
+        [mamba_exe, "shell", "hook", "-s", shell], env=env, capture_output=True, text=True
+    )
+    assert hook.returncode == 0
+    assert bool(hook.stderr) is expect_hook_stderr
+
+    assert (default_prefix / "condabin").is_dir() is expect_prefix_dirs
+    assert (default_prefix / "Scripts").is_dir() is expect_prefix_dirs
+    assert (default_prefix / "conda-meta").is_dir() is expect_prefix_dirs
+
+    # Running `mamba_exe` again does not fail silently
+    res = subprocess.run([mamba_exe], env=env, capture_output=True, text=True)
+    assert res.returncode == 0
+    assert not res.stderr, f"stderr was not empty: {res.stderr}"
 
 
 @pytest.mark.parametrize(
