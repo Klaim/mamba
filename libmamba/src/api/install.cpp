@@ -1268,12 +1268,8 @@ namespace mamba
                 if (prompt_entry)
                 {
                     transaction.execute(ctx, channel_context, prefix_data);
-                    if (ctx.output_params.json)
-                    {
-                        transaction.log_json();
-                    }
                 }
-                else if (ctx.output_params.json)
+                if (ctx.output_params.json)
                 {
                     transaction.log_json();
                 }
