@@ -113,6 +113,6 @@ def test_proxy_install(
     with open(proxy.dump) as f:
         proxied_requests = f.read().splitlines()
 
-    assert res["actions"]["FETCH"] # must not be empty
+    assert res["actions"]["FETCH"]  # must not be empty
     for fetch in res["actions"]["FETCH"]:
         assert fetch["url"] in proxied_requests

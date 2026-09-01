@@ -194,7 +194,10 @@ def test_specs(tmp_home, tmp_root_prefix, tmp_path, source, file_type, create_cm
     json_res = helpers.create(*cmd, "--json", create_cmd=create_cmd)
     assert json_res["success"]
 
-def check_channels_from_lockfile(json_packages, lockfile_format, expected_valid_channels = ["conda-forge"], exclude_packages = []):
+
+def check_channels_from_lockfile(
+    json_packages, lockfile_format, expected_valid_channels=["conda-forge"], exclude_packages=[]
+):
     expected_valid_channels_urls = []
 
     # TODO: handle other formats once they support channels from lockfiles
@@ -205,22 +208,31 @@ def check_channels_from_lockfile(json_packages, lockfile_format, expected_valid_
             "https://repo.prefix.dev/conda-forge",
             "https://prefix.dev/emscripten-forge-dev",
             "https://repo.prefix.dev/emscripten-forge-dev",
-            "https://pypi.org/" # for now we ignore pypi packages having no known url
+            "https://pypi.org/",  # for now we ignore pypi packages having no known url
         ]
 
     for package in json_packages:
-        name = package['name']
+        name = package["name"]
         if name in exclude_packages:
             continue
         channel = package["channel"]
-        assert channel in expected_valid_channels or channel in expected_valid_channels_urls, f"unexpected package `{name}`'s channel name : {channel} (expected channels: {expected_valid_channels} or {expected_valid_channels_urls})\npackages: {json.dumps(json_packages, indent=2)}"
+        assert channel in expected_valid_channels or channel in expected_valid_channels_urls, (
+            f"unexpected package `{name}`'s channel name : {channel} (expected channels: {expected_valid_channels} or {expected_valid_channels_urls})\npackages: {json.dumps(json_packages, indent=2)}"
+        )
         if expected_valid_channels_urls:
             url = package["url"]
-            if not url and channel in ["https://pypi.org/", "pypi"]: # for now we ignore pypi packages having no known url
+            if not url and channel in [
+                "https://pypi.org/",
+                "pypi",
+            ]:  # for now we ignore pypi packages having no known url
                 # skip
                 continue
-                
-            assert any(url.startswith(channel_url) for channel_url in expected_valid_channels_urls), f"package `{name}`'s url not starting with expected channel url : {url} (expected channel urls: {expected_valid_channels_urls})\npackages: {json.dumps(json_packages, indent=2)}"
+
+            assert any(
+                url.startswith(channel_url) for channel_url in expected_valid_channels_urls
+            ), (
+                f"package `{name}`'s url not starting with expected channel url : {url} (expected channel urls: {expected_valid_channels_urls})\npackages: {json.dumps(json_packages, indent=2)}"
+            )
 
 
 @pytest.mark.parametrize("shared_pkgs_dirs", [True], indirect=True)
