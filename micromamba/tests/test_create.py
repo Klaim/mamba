@@ -217,7 +217,7 @@ def check_channels_from_lockfile(
             continue
         channel = package["channel"]
         assert channel in expected_valid_channels or channel in expected_valid_channels_urls, (
-            f"unexpected package `{name}`'s channel name : {channel} (expected channels: {expected_valid_channels} or {expected_valid_channels_urls})\npackages: {json.dumps(json_packages, indent=2)}"
+            f"unexpected package `{name}`'s channel name : '{channel}' (expected channels: {expected_valid_channels} or {expected_valid_channels_urls})\npackages: {json.dumps(json_packages, indent=2)}"
         )
         if expected_valid_channels_urls:
             url = package["url"]
@@ -231,7 +231,7 @@ def check_channels_from_lockfile(
             assert any(
                 url.startswith(channel_url) for channel_url in expected_valid_channels_urls
             ), (
-                f"package `{name}`'s url not starting with expected channel url : {url} (expected channel urls: {expected_valid_channels_urls})\npackages: {json.dumps(json_packages, indent=2)}"
+                f"package `{name}`'s url not starting with expected channel url : '{url}' (expected channel urls: {expected_valid_channels_urls})\npackages: {json.dumps(json_packages, indent=2)}"
             )
 
 
