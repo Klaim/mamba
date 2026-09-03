@@ -38,7 +38,7 @@ namespace mamba::download
     namespace
     {
         template <std::ranges::input_range R>
-        bool contains_mirror_with_id(const R& r, const MirrorID& id)
+        bool contains_mirror(const R& r, const MirrorID& id)
         {
             return std::ranges::any_of(r, [&](const auto& mirror) { return mirror->id() == id; });
         }
@@ -61,7 +61,7 @@ namespace mamba::download
         if (find_it != m_mirrors.end())
         {
             auto& mirrors = find_it->second;
-            if (contains_mirror_with_id(mirrors, mirror->id()))
+            if (contains_mirror(mirrors, mirror->id()))
             {
                 return false;
             }

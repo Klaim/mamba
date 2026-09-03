@@ -438,8 +438,7 @@ namespace mamba
                         const auto repodata_url = repodata_record["url"].get<std::string>();
                         if (!repodata_url.empty())
                         {
-                            const auto pkg_url = repodata_record["url"].get<std::string>();
-                            if (!compare_cleaned_url(pkg_url, s.package_url))
+                            if (!compare_cleaned_url(repodata_url, s.package_url))
                             {
                                 LOG_WARNING << "Extracted package cache '" << extracted_dir.string()
                                             << "' has invalid url";
