@@ -362,8 +362,7 @@ namespace
                         return util::get_env("SHELL").value_or("bash");
                     };
 
-                    exit(
-                        mamba::run_in_environment(
+                    const auto exit_code = mamba::run_in_environment(
                             config.context(),
                             config.context().prefix_params.target_prefix,
                             { get_shell() },
@@ -373,8 +372,8 @@ namespace
                             false,
                             {},
                             ""
-                        )
-                    );
+                        );
+                    mamba::request_exit_code(exit_code);
                 }
             }
         );

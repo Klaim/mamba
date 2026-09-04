@@ -91,9 +91,14 @@ get_completions(CLI::App* app, mamba::Configuration& config, int argc, char** ar
 void
 set_auth_command(CLI::App* subcom);
 
-/// @returns An exit code to return from `main()` IFF the `run` sub-command
-///          has been executed and resulted an exit code.
-auto
-get_mamba_run_command_exit_code() -> std::optional<int>;
+namespace mamba
+{
+    /// @returns An exit code to return from `main()` IFF a sub-command
+    ///          has been executed and requested the program to exit with that code.
+    auto get_requested_exit_code() -> std::optional<int>;
+
+    /// Requests `main()` to exit with the specified exit code if possible.
+    auto request_exit_code(int exit_code) -> void;
+}
 
 #endif

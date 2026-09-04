@@ -24,6 +24,7 @@
 #include "mamba/util/random.hpp"
 
 #include "common_options.hpp"
+#include "umamba.hpp"
 
 #ifndef _WIN32
 extern "C"
@@ -137,16 +138,6 @@ set_ps_command(CLI::App* subcom, Context& context)
     );
 }
 
-namespace
-{
-    std::optional<int> mamba_run_command_exit_code;
-}
-
-auto get_mamba_run_command_exit_code() -> std::optional<int>
-{
-    return mamba_run_command_exit_code;
-}
-
 void
 set_run_command(CLI::App* subcom, Configuration& config)
 {
@@ -253,7 +244,7 @@ set_run_command(CLI::App* subcom, Configuration& config)
                 specific_process_name
             );
 
-            mamba_run_command_exit_code = exit_code;
+            mamba::request_exit_code(exit_code);
         }
     );
 }

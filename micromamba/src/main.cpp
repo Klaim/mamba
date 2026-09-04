@@ -137,6 +137,7 @@ report_error(
 
 namespace
 {
+    std::optional<int> requested_exit_code;
     std::atomic<bool> constructed_console{ false };
     std::optional<ContextOptions> pre_config_options;
 
@@ -172,6 +173,19 @@ namespace
         }
         logging::flush_logs();
         std::abort();
+    }
+}
+
+namespace mamba
+{
+    auto request_exit_code(int exit_code) -> void
+    {
+        requested_exit_code = exit_code;
+    }
+
+    auto get_requested_exit_code() -> std::optional<int>
+    {
+        return requested_exit_code;
     }
 }
 
@@ -262,10 +276,9 @@ main(int argc, char** argv)
             config.load();
             Console::instance().print(app.get_subcommand("config")->help());
         }
-        if (auto maybe_exit_code = get_mamba_run_command_exit_code())  // the `run` subcommand was
-                                                                       // executed and resulted in
-                                                                       // an exit code that we must
-                                                                       // use
+        if (auto maybe_exit_code = get_requested_exit_code())  // a subcommand was executed and
+                                                               // requested the program to exit with
+                                                               // an exit code
         {
             return_value = maybe_exit_code.value();
         }
