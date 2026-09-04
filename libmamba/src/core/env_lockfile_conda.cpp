@@ -160,8 +160,21 @@ namespace mamba
             for (const auto& channel_node : metadata_node["channels"])
             {
                 EnvironmentLockFile::Channel channel;
-                // FIXME: how to get the name?
-                channel.urls.push_back(channel_node["url"].as<std::string>());
+
+                const auto name_node = channel_node["name"];
+                const auto channel_url = channel_node["url"].as<std::string>();
+
+                // Use the channel name if provided, or url as a name instead.
+                if (not name_node.IsNull())
+                {
+                    channel.name = name_node.as<std::string>();
+                }
+                else
+                {
+                    channel.name = channel_url;
+                }
+
+                channel.urls.push_back(channel_url);
                 channel.used_env_vars = channel_node["used_env_vars"].as<std::vector<std::string>>();
                 metadata.channels.push_back(std::move(channel));
             }
