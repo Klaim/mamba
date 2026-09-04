@@ -99,6 +99,12 @@ namespace umamba
 
     /// Requests `main()` to exit with the specified exit code if possible.
     auto request_exit_code(int exit_code) -> void;
+
+    /// Current application name ("micromamba" or "mamba")
+    auto app_name() -> std::string;
+
+    /// Current application name ("micromamba" or "mamba") with a version number.
+    auto app_name_with_version() -> std::string;
 }
 
 #endif

@@ -194,7 +194,7 @@ main(int argc, char** argv)
 
     ctx.command_params.is_mamba_exe = true;
 
-    CLI::App app{ "Version: " + version() + "\n" };
+    CLI::App app{ umamba::app_name_with_version() };
     set_umamba_command(&app, config);
 
     char** utf8argv;
@@ -308,18 +308,24 @@ main(int argc, char** argv)
         // We only preserve CLI11 output behavior when errors from CLI11
         // occurs because of `--help` or `--version` is used. Otherwise we follow the
         // logic that `--json` outputs everything as JSON.
-        static constexpr std::array non_error_request_names = { "CallForHelp"sv,
-                                                                "CallForAllHelp"sv,
-                                                                "CallForVersion"sv };
-        const bool is_non_error_request = std::ranges::find(non_error_request_names, e.get_name())
+        static constexpr std::array non_error_request_names = { "CallForHelp"sv, "CallForAllHelp"sv };
+        static constexpr auto version_print_request = "CallForVersion"sv;
+        const auto error_name = e.get_name();
+        const bool is_non_error_request = std::ranges::find(non_error_request_names, error_name)
                                           != non_error_request_names.end();
+        const bool is_version_print_request = version_print_request == error_name;
 
-        if (ctx.output_params.json and not is_non_error_request)
+        if (ctx.output_params.json and (not is_non_error_request or is_version_print_request))
         {
             // we want the output to end up in the json log history
             std::stringstream output;
             return_value = app.exit(e, output, output);
-            LOG_WARNING << output.str();
+            if (not is_version_print_request)
+            {
+                // when using json output and just wanting the version, we don't need to report the
+                // rest of the output
+                LOG_WARNING << output.str();
+            }
         }
         else
         {
