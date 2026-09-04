@@ -137,6 +137,16 @@ set_ps_command(CLI::App* subcom, Context& context)
     );
 }
 
+namespace
+{
+    std::optional<int> mamba_run_command_exit_code;
+}
+
+auto get_mamba_run_command_exit_code() -> std::optional<int>
+{
+    return mamba_run_command_exit_code;
+}
+
 void
 set_run_command(CLI::App* subcom, Configuration& config)
 {
@@ -193,8 +203,9 @@ set_run_command(CLI::App* subcom, Configuration& config)
             std::vector<std::string> command = subcom->remaining();
             if (command.empty())
             {
-                LOG_ERROR << "Did not receive any command to run inside environment";
-                exit(1);
+                const auto message = "Did not receive any command to run inside environment";
+                LOG_ERROR << message;
+                throw mamba_error(message, mamba_error_code::incorrect_usage);
             }
 
             // create a copy before inserting additional things
@@ -242,7 +253,7 @@ set_run_command(CLI::App* subcom, Configuration& config)
                 specific_process_name
             );
 
-            exit(exit_code);
+            mamba_run_command_exit_code = exit_code;
         }
     );
 }

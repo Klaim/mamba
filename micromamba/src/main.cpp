@@ -262,6 +262,13 @@ main(int argc, char** argv)
             config.load();
             Console::instance().print(app.get_subcommand("config")->help());
         }
+        if (auto maybe_exit_code = get_mamba_run_command_exit_code())  // the `run` subcommand was
+                                                                       // executed and resulted in
+                                                                       // an exit code that we must
+                                                                       // use
+        {
+            return_value = maybe_exit_code.value();
+        }
     }
     catch (const mamba::mamba_error& e)
     {
