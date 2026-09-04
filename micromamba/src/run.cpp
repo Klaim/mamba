@@ -244,7 +244,7 @@ set_run_command(CLI::App* subcom, Configuration& config)
                 specific_process_name
             );
 
-            mamba::request_exit_code(exit_code);
+            umamba::request_exit_code(exit_code);
         }
     );
 }

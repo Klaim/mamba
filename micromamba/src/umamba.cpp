@@ -15,6 +15,24 @@
 
 using namespace mamba;  // NOLINT(build/namespaces)
 
+
+
+namespace umamba
+{
+    std::optional<int> requested_exit_code;
+
+    auto request_exit_code(int exit_code) -> void
+    {
+        requested_exit_code = exit_code;
+    }
+
+    auto get_requested_exit_code() -> std::optional<int>
+    {
+        return requested_exit_code;
+    }
+}
+
+
 void
 init_umamba_options(CLI::App* subcom, Configuration& config)
 {

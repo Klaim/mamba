@@ -91,7 +91,7 @@ get_completions(CLI::App* app, mamba::Configuration& config, int argc, char** ar
 void
 set_auth_command(CLI::App* subcom);
 
-namespace mamba
+namespace umamba
 {
     /// @returns An exit code to return from `main()` IFF a sub-command
     ///          has been executed and requested the program to exit with that code.

@@ -373,7 +373,7 @@ namespace
                             {},
                             ""
                         );
-                    mamba::request_exit_code(exit_code);
+                    umamba::request_exit_code(exit_code);
                 }
             }
         );
