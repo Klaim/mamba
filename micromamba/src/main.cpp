@@ -269,6 +269,11 @@ main(int argc, char** argv)
             return_value = maybe_exit_code.value();
         }
     }
+    catch (const mamba::mamba_early_exit_request&)
+    {
+        // Gracefully exit the program without noise.
+        LOG_DEBUG << "early exit request received, exiting now";
+    }
     catch (const mamba::mamba_error& e)
     {
         // We treat interruptions (ctrl-c) specially by not logging a critical error.
