@@ -403,7 +403,7 @@ namespace mamba
                 fmt::join(command, " ")
             );
             auto result = daemonize();
-            if(result)
+            if (result)
             {
                 return *result;
             }
