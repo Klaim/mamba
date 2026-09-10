@@ -4,9 +4,12 @@
 //
 // The full license is in the file LICENSE, distributed with this software.
 
+#include <format>
+
 #include "mamba/api/configuration.hpp"
 #include "mamba/core/channel_context.hpp"
 #include "mamba/core/context.hpp"
+#include "mamba/core/util_os.hpp"
 #include "mamba/version.hpp"
 
 #include "common_options.hpp"
@@ -14,6 +17,31 @@
 #include "version.hpp"
 
 using namespace mamba;  // NOLINT(build/namespaces)
+
+namespace umamba
+{
+    std::optional<int> requested_exit_code;
+
+    auto request_exit_code(int exit_code) -> void
+    {
+        requested_exit_code = exit_code;
+    }
+
+    auto get_requested_exit_code() -> std::optional<int>
+    {
+        return requested_exit_code;
+    }
+
+    auto app_name() -> std::string
+    {
+        return mamba::get_self_exe_path().stem().string();
+    }
+
+    auto app_name_with_version() -> std::string
+    {
+        return std::format("{} v{}", umamba::app_name(), umamba::version());
+    }
+}
 
 void
 init_umamba_options(CLI::App* subcom, Configuration& config)
@@ -31,20 +59,20 @@ set_umamba_command(CLI::App* com, mamba::Configuration& config)
 
     context.command_params.caller_version = umamba::version();
 
-    auto print_version = [&](int /*count*/)
+    auto print_version = [&]() -> std::string
     {
         if (config.context().output_params.json)
         {
             Console::instance().set_json_output("/version"_json_pointer, umamba::version());
+            return "";
         }
         else
         {
-            std::cout << umamba::version() << std::endl;
-            exit(0);
+            return umamba::version();
         }
     };
 
-    com->add_flag_function("--version", print_version);
+    com->set_version_flag("--version", print_version);
 
     CLI::App* shell_subcom = com->add_subcommand("shell", "Generate shell init scripts");
     set_shell_command(shell_subcom, config);
