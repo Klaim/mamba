@@ -402,10 +402,10 @@ namespace mamba
                 "Running wrapped script {} in the background\n",
                 fmt::join(command, " ")
             );
-            auto result = daemonize();
-            if (result)
+            const auto maybe_exit_code = daemonize();
+            if (maybe_exit_code)
             {
-                return *result;
+                return maybe_exit_code.value();
             }
         }
 #endif

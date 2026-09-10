@@ -68,7 +68,7 @@ set_umamba_command(CLI::App* com, mamba::Configuration& config)
         }
         else
         {
-            return umamba::app_name_with_version();
+            return umamba::version();
         }
     };
 
