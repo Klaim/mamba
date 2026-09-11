@@ -10,6 +10,7 @@
 #include "mamba/core/channel_context.hpp"
 #include "mamba/core/context.hpp"
 #include "mamba/core/util_os.hpp"
+#include "mamba/util/string.hpp"
 #include "mamba/version.hpp"
 
 #include "common_options.hpp"
@@ -40,6 +41,81 @@ namespace umamba
     auto app_name_with_version() -> std::string
     {
         return std::format("{} v{}", umamba::app_name(), umamba::version());
+    }
+
+    // Collect names and aliases of all subcommands registered in the CLI app.
+    auto subcommand_names(const CLI::App* app) -> std::vector<std::string>
+    {
+        std::vector<std::string> names;
+        for (const auto& subcom : app->get_subcommands(nullptr))
+        {
+            names.push_back(subcom->get_name());
+            for (const auto& alias : subcom->get_aliases())
+            {
+                names.push_back(alias);
+            }
+        }
+        return names;
+    }
+
+    auto deepest_parsed_app(const CLI::App* app) -> const CLI::App*
+    {
+        const auto parsed = app->get_subcommands();
+        if (parsed.empty())
+        {
+            return app;
+        }
+        return deepest_parsed_app(parsed.back());
+    }
+
+    auto command_suggestion(const CLI::App* app, const CLI::Error& e) -> std::string
+    {
+        if (dynamic_cast<const CLI::ExtrasError*>(&e) == nullptr)
+        {
+            return {};
+        }
+
+        const CLI::App* parsed_app = deepest_parsed_app(app);
+
+        std::string offending;
+        for (const auto& arg : parsed_app->remaining(false))
+        {
+            if (!util::starts_with(arg, "-"))
+            {
+                offending = arg;
+                break;
+            }
+        }
+        if (offending.empty())
+        {
+            return {};
+        }
+
+        const auto matches = util::closest_matches(offending, subcommand_names(parsed_app), 0.6, 1);
+        if (matches.empty())
+        {
+            return {};
+        }
+
+        return "Did you mean '" + matches.front() + "'?";
+    }
+
+    auto failure_message_with_suggestion(const CLI::App* app, const CLI::Error& e) -> std::string
+    {
+        std::string base = CLI::FailureMessage::simple(app, e);
+        const std::string suggestion = command_suggestion(app, e);
+        if (suggestion.empty())
+        {
+            return base;
+        }
+
+        const std::string what = e.what();
+        if (base.rfind(what, 0) == 0)
+        {
+            return base.substr(0, what.size()) + "\n" + suggestion + base.substr(what.size());
+        }
+
+        return base + "\n" + suggestion;
     }
 }
 
@@ -151,4 +227,6 @@ set_umamba_command(CLI::App* com, mamba::Configuration& config)
     set_repoquery_search_command(search_subcom, config);
 
     com->require_subcommand(/* min */ 0, /* max */ 1);
+
+    com->failure_message(&umamba::failure_message_with_suggestion);
 }
