@@ -61,9 +61,7 @@ namespace mamba::logging
     TEST_CASE("LogHandler_spdlog logging API basic tests")
     {
         static constexpr std::size_t arbitrary_log_count = 123;
-        static const testing::LogHandlerTestsOptions options{
-            .log_count = arbitrary_log_count
-        };
+        static const testing::LogHandlerTestsOptions options{ .log_count = arbitrary_log_count };
 
         spdlogimpl::LogHandler_spdlog handler{ testing_options };
 
