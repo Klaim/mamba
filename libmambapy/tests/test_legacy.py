@@ -2,6 +2,7 @@ import subprocess
 import sys
 import libmambapy
 
+
 def test_context_instance_scoped():
     ctx = libmambapy.Context()  # Initialize and then terminate libmamba internals
     assert ctx is not None
@@ -26,6 +27,7 @@ def test_channel_context():
     cc = libmambapy.ChannelContext.make_simple(ctx)
     assert cc.make_channel("pkgs/main")[0].url.str() == "https://conda.anaconda.org/pkgs/main"
     assert len(cc.params().custom_channels) == 0
+
 
 def test_context_survives_interpreter_shutdown():
     # Regression for mamba-org/mamba#4378 / conda/constructor#1319:
