@@ -56,6 +56,7 @@
 #ifndef MAMBA_CORE_LOGGING_HPP
 #define MAMBA_CORE_LOGGING_HPP
 
+#include <any>
 #include <array>
 #include <cassert>
 #include <concepts>
@@ -67,6 +68,7 @@
 #include <string>
 #include <typeindex>
 #include <utility>
+#include <variant>
 #include <vector>
 
 #include "mamba/util/metaprog.hpp"
@@ -190,8 +192,56 @@ namespace mamba
         // TODO: this is a placeholder, replace it by the real thing once available.
         // The intent is to have a type doing SBO when possible, but act as unique_ptr otherwise.
         // Might require allowing to use shared_ptr too, or some kind of value_ptr.
-        template <typename Interface, std::size_t local_storage_size = sizeof(std::shared_ptr<Interface>)>
-        using SBO_storage = std::unique_ptr<Interface>;
+        template <typename Interface>
+        class SBO_storage
+        {
+        public:
+
+            SBO_storage() = default;
+            SBO_storage(const SBO_storage&) = delete;
+            SBO_storage& operator=(const SBO_storage&) = delete;
+            SBO_storage(SBO_storage&&) noexcept = default;
+            SBO_storage& operator=(SBO_storage&&) noexcept = default;
+
+
+            template <class Wrapper, LogHandlerOrPtr T >
+                requires not std::same_as<SBO_storage, Wrapper>
+                         and std::is_base_of_v<Interface, Wrapper>
+                         and std::same_as<decltype(Wrapper::object), T>
+            SBO_storage(T&& value)
+            {
+                emplace(std::forward<T>(value));
+            }
+
+            template <class Wrapper, LogHandlerOrPtr T>
+                requires not std::same_as<SBO_storage, Wrapper>
+                         and std::is_base_of_v<Interface, Wrapper>
+                         and std::same_as<decltype(Wrapper::object), T>
+            SBO_storage& operator=(T&& value)
+            {
+                emplace(std::forward<T>(value));
+            }
+
+            template <class Wrapper, LogHandlerOrPtr T>
+            requires std::is_base_of_v<Interface, Wrapper>
+                     and std::same_as<decltype(Wrapper::object), T>
+            auto emplace(T&& value) -> void
+            {
+                storage.emplace<Wrapper>(std::forward<T>(value));
+                stored = std::any_cast<Wrapper*>(storage);
+            }
+
+            auto get() const -> const Interface* { return stored; }
+            auto get() -> Interface* { return stored; }
+
+            operator*()
+
+        private:
+
+            Interface* stored = nullptr;
+            std::any storage; // std::any implementations usually do SBO but for a implementation-defined fixed size.
+
+        };
 
         // Helper comparison of source locations, to help with testing.
         inline constexpr bool
@@ -455,7 +505,7 @@ namespace mamba
 
         // clang-format off
         template <typename T>
-        concept LogHandlerSmartPtr = (util::is_type_instance_of_v<T,std::shared_ptr> or util::is_type_instance_of_v<T, std::unique_ptr>)
+        concept LogHandlerSmartPtr = (util::is_type_instance_of_v<T,std::shared_ptr>or util::is_type_instance_of_v<T, std::unique_ptr>)
                                      and LogHandler<typename T::element_type>;
         // clang-format on
 
@@ -569,8 +619,7 @@ namespace mamba
                     - `has_value() == true`
 
                 @param handler_ptr A standard smart-pointer (`std::shared_ptr` or `std::unique_ptr`)
-                                   to a log handler object which type satisfies
-               `mamba::logging::LogHandler` requirements.
+                                   to a log handler object which type satisfies `mamba::logging::LogHandler` requirements.
 
                 @see `mamba::logging::LogHandler`
             */
